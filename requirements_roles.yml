@@ -1,0 +1,2 @@
+- src: https://github.com/galaxyproject/ansible-galaxy-os.git
+  name: galaxy-os
