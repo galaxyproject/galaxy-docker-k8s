@@ -1,2 +1,4 @@
 - src: https://github.com/galaxyproject/ansible-galaxy-os.git
   name: galaxy-os
+- src: https://github.com/galaxyproject/ansible-galaxy.git
+  name: galaxy

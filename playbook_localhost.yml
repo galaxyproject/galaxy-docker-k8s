@@ -10,6 +10,8 @@
 
   roles:
   - galaxy-os
+  - galaxy
+
 
   post_tasks:
     - name: Clean up
