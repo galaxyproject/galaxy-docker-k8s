@@ -1,3 +1,30 @@
+## galaxy-os role variables
 install_slurm_drmaa_lib: no
 
-galaxy_server_dir: "/galaxy"
+## galaxy role variables
+galaxy_server_dir: /galaxy/server
+galaxy_config_dir: "{{ galaxy_server_dir }}/config"
+galaxy_commit_id: release_19.01
+galaxy_config_style: yaml
+# galaxy_manage_database: no
+galaxy_config:
+  uwsgi:
+    virtualenv: "{{ galaxy_server_dir }}/.venv"
+    http: 0.0.0.0:80
+    static-map:
+      - /static/style={{ galaxy_server_dir }}/static/style/blue
+      - /static={{ galaxy_server_dir }}/static
+    pythonpath: "{{ galaxy_server_dir }}/lib"
+    thunder-lock: true
+    module: galaxy.webapps.galaxy.buildapp:uwsgi_app()
+    buffer-size: 16384
+    offload-threads: 2
+    processes: 1
+    threads: 4
+    die-on-term: true
+    master: true
+    hook-master-start:
+      - unix_signal:2 gracefully_kill_them_all
+      - unix_signal:15 gracefully_kill_them_all
+    enable-threads: true
+    py-call-osafterfork: true

@@ -8,10 +8,15 @@
 - hosts: localhost
   connection: local
 
-  roles:
-  - galaxy-os
-  - galaxy
+  pre_tasks:
+  - name: Create Galaxy user
+    user:
+      name: galaxy
+      system: yes
+      home: /galaxy
 
+  roles:
+  - galaxy
 
   post_tasks:
     - name: Clean up
