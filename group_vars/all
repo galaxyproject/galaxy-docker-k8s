@@ -2,6 +2,10 @@
 install_slurm_drmaa_lib: no
 
 ## galaxy role variables
+
+#this one pending merge in ansible-galaxy
+galaxy_repo_clone_depth: 1
+
 galaxy_server_dir: /galaxy/server
 galaxy_config_dir: "{{ galaxy_server_dir }}/config"
 galaxy_commit_id: release_19.01
