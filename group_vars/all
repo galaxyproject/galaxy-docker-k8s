@@ -2,13 +2,16 @@
 install_slurm_drmaa_lib: no
 
 ## galaxy role variables
+galaxy_manage_clone: false 
+galaxy_manage_download: true 
 
-#this one pending merge in ansible-galaxy
-galaxy_repo_clone_depth: 1
+# Cannot use 19.01 unless we make an archive. 
+# Must override this variable because constructed value is incorrect for download.
+galaxy_download_url: "https://github.com/galaxyproject/galaxy/archive/release_18.05.tar.gz"
 
 galaxy_server_dir: /galaxy/server
 galaxy_config_dir: "{{ galaxy_server_dir }}/config"
-galaxy_commit_id: release_19.01
+galaxy_commit_id: release_18.05
 galaxy_config_style: yaml
 # galaxy_manage_database: no
 galaxy_config:
