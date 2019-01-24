@@ -49,6 +49,6 @@ RUN apt-get -qq update && apt-get install -y --no-install-recommends \
 ## TODO: pre-build conda. Check the rest.
 
 WORKDIR /galaxy/server/
-EXPOSE 80
+EXPOSE 8080
 
 USER galaxy
