@@ -7,7 +7,6 @@
 
 - hosts: localhost
   connection: local
-
   pre_tasks:
   - name: Create Galaxy user
     user:
@@ -18,8 +17,9 @@
   roles:
   - galaxy
 
-  post_tasks:
-    - name: Clean up
-      apt:
-        autoclean: yes
-        autoremove: yes
+  # No need if using multi-stage build
+  #post_tasks:
+  #  - name: Clean up
+  #    apt:
+  #      autoclean: yes
+  #      autoremove: yes
