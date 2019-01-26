@@ -28,6 +28,9 @@ WORKDIR /galaxy/server/
 RUN make client-production \
       && rm /galaxy/server/client/node_modules -rf
 
+# Run common startup to prefetch wheels
+RUN ./scripts/common_startup.sh
+
 # Start new build stage for final image
 FROM ubuntu:18.04
 ARG DEBIAN_FRONTEND=noninteractive 
@@ -45,3 +48,5 @@ COPY --chown=galaxy:galaxy --from=builder /galaxy/server .
 
 EXPOSE 8080
 USER galaxy
+
+CMD sh run.sh --skip-wheels --skip-client-build --skip-tool-dependency-initialization
