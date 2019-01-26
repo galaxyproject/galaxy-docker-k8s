@@ -28,6 +28,9 @@ WORKDIR /galaxy/server/
 RUN make client-production \
       && rm /galaxy/server/client/node_modules -rf
 
+# Strip all source code
+RUN find .venv/lib/python2.7/site-packages/ -name "*.py" -exec rm -f {} \;
+
 # Start new build stage for final image
 FROM ubuntu:18.04
 ARG DEBIAN_FRONTEND=noninteractive 
