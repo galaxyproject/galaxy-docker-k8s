@@ -17,8 +17,15 @@
   roles:
   - galaxy
 
+# Client dependencies need to be installed before running this, so uncomment
+# once they are moved here
+#   post_tasks:
+#   - name: Run common startup to prefetch wheels
+#     shell: "{{ galaxy_server_dir }}/scripts/common_startup.sh"
+#     args:
+#         chdir: "{{ galaxy_server_dir }}"
+
   # No need if using multi-stage build
-  #post_tasks:
   #  - name: Clean up
   #    apt:
   #      autoclean: yes

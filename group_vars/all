@@ -1,9 +1,7 @@
-## galaxy-os role variables
-install_slurm_drmaa_lib: no
-
 ## galaxy role variables
 galaxy_manage_clone: false 
 galaxy_manage_download: true 
+pip_extra_args: "--no-cache-dir --compile"
 
 # Cannot use 19.01 unless we make an archive. 
 # Must override this variable because constructed value is incorrect for download.

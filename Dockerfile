@@ -28,6 +28,9 @@ WORKDIR /galaxy/server/
 RUN make client-production \
       && rm /galaxy/server/client/node_modules -rf
 
+# Run common startup to prefetch wheels
+RUN ./scripts/common_startup.sh
+
 # Strip all source code
 RUN find .venv/lib/python2.7/site-packages/ -name "*.py" -exec rm -f {} \;
 
@@ -48,3 +51,5 @@ COPY --chown=galaxy:galaxy --from=builder /galaxy/server .
 
 EXPOSE 8080
 USER galaxy
+
+CMD sh run.sh --skip-wheels --skip-client-build --skip-tool-dependency-initialization
