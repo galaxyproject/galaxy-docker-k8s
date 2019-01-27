@@ -31,9 +31,6 @@ RUN make client-production \
 # Run common startup to prefetch wheels
 RUN ./scripts/common_startup.sh
 
-# Strip all source code
-RUN find .venv/lib/python2.7/site-packages/ -name "*.py" -exec rm -f {} \;
-
 # Start new build stage for final image
 FROM ubuntu:18.04
 ARG DEBIAN_FRONTEND=noninteractive 
