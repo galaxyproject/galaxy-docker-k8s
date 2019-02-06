@@ -51,8 +51,7 @@ docker run --rm -e POSTGRES_DB=galaxy -e POSTGRES_PASSWORD=galaxyDBpwd -P \
 ```
 docker build --network gnet -t galaxy .
 ```
-
-5. Stop both, the Galaxy and Postgres containers.
+You may stop the Postgres container after the Galaxy image has been built.
 
 ## Run the container
 To run the SQLite container and get an interactive shell, run the following:
@@ -60,18 +59,13 @@ To run the SQLite container and get an interactive shell, run the following:
 docker run -it -p 8080:8080 galaxy bash
 ```
 
-To start the Postgres version, start the Postgres container:
-```
-docker run --rm -e POSTGRES_DB=galaxy -e POSTGRES_PASSWORD=galaxyDBpwd -P \
---name gpsql -v /tmp/docker/volumes/postgres:/var/lib/postgresql/data \
-postgres:10.6
-```
+To start the Postgres version, first ensure that the Postgres container is running (refer to step 2
+in the previous section). 
 
-Start the Galaxy container:
+Then start the Galaxy container:
 ```
-docker run -it --rm --link gpsql:gpsql -p 8080:8080 galaxy bash
+docker run -it --rm --network gnet -p 8080:8080 galaxy bash
 ```
-
 To start Galaxy in the 'single-container' configuration, run `sh run.sh` within
 the container; once it starts, Galaxy will be available on the host under
 `localhost:8080`.
@@ -80,7 +74,7 @@ Alternatively, to start web handlers and job handlers as separate containers,
 we need to do the following.
 Start the job handler container using the following command:
 ```
-docker run -it --rm --link gpsql:gpsql -p 8080:8080 galaxy bash
+docker run -it --rm --network gnet -p 8080:8080 galaxy bash
 ```
 
 Then, exec into the created container and create the
@@ -106,7 +100,7 @@ Start the Galaxy process as normal by running `sh run.sh`.
 Next, create an additional 2 containers as job handlers with the following command:
 
 ```
-docker run -it --rm --link gpsql:gpsql galaxy bash
+docker run -it --rm --network gnet galaxy bash
 ```
 
 For each container, create an equivalent `job_conf.xml` file as in the web
