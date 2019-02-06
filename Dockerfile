@@ -13,15 +13,15 @@ RUN apt-get -qq update && apt-get install -y --no-install-recommends \
 RUN apt-add-repository -y ppa:ansible/ansible \
       && apt-get -qq update && apt-get install -y --no-install-recommends ansible 
 
-# Run ansible-galaxy
-WORKDIR /tmp/ansible
-COPY . .
-RUN ansible-playbook -i localhost, playbook_localhost.yml
-
 # Install client build tools 
 RUN apt-get -qq update && apt-get install -y --no-install-recommends \
       git make nodejs npm python-pip \
       && pip install requests && npm install -g yarn 
+
+# Run ansible-galaxy
+WORKDIR /tmp/ansible
+COPY . .
+RUN ansible-playbook -i localhost, playbook_localhost.yml
 
 # Build the client
 WORKDIR /galaxy/server/
@@ -49,4 +49,8 @@ COPY --chown=galaxy:galaxy --from=builder /galaxy/server .
 EXPOSE 8080
 USER galaxy
 
-CMD sh run.sh --skip-wheels --skip-client-build --skip-tool-dependency-initialization
+# [WIP]
+# start the container, then run: ". .venv/bin/activate && uwsgi --yaml config/galaxy.yml --daemonize tmp.log"
+
+# [WIP: not needed]
+# CMD sh run.sh --skip-wheels --skip-client-build --skip-tool-dependency-initialization
