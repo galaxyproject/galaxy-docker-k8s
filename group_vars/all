@@ -1,27 +1,32 @@
 ## galaxy role variables
-galaxy_manage_clone: false 
-galaxy_manage_download: true 
-pip_extra_args: "--no-cache-dir --compile"
-
-# Cannot use 19.01 unless we make an archive. 
-# Must override this variable because constructed value is incorrect for download.
-galaxy_download_url: "https://github.com/galaxyproject/galaxy/archive/release_18.09.tar.gz"
-
-galaxy_server_dir: /galaxy/server
-galaxy_config_dir: "{{ galaxy_server_dir }}/config"
-galaxy_commit_id: release_18.09
 galaxy_config_style: yaml
-# galaxy_manage_database: no
+galaxy_manage_clone: false
+galaxy_manage_download: true
+pip_extra_args: "--no-cache-dir --compile"
+galaxy_download_url: "https://github.com/galaxyproject/galaxy/archive/release_18.09.tar.gz"
+galaxy_commit_id: release_18.09
+galaxy_build_client: no
+
+galaxy_layout: root-dir
+galaxy_root: /galaxy
+
+
+galaxy_create_user: yes
+galaxy_manage_paths: yes
+
+galaxy_user: galaxy
+galaxy_group: galaxy
+
 galaxy_config:
   uwsgi:
-    virtualenv: "{{ galaxy_server_dir }}/.venv"
+    virtualenv: "{{ galaxy_venv_dir }}"
+    pythonpath: "{{ galaxy_server_dir }}/lib"
+    module: galaxy.webapps.galaxy.buildapp:uwsgi_app()
     http: 0.0.0.0:8080
     static-map:
       - /static/style={{ galaxy_server_dir }}/static/style/blue
       - /static={{ galaxy_server_dir }}/static
-    pythonpath: "{{ galaxy_server_dir }}/lib"
     thunder-lock: true
-    module: galaxy.webapps.galaxy.buildapp:uwsgi_app()
     buffer-size: 16384
     offload-threads: 2
     processes: 1
@@ -33,5 +38,46 @@ galaxy_config:
       - unix_signal:15 gracefully_kill_them_all
     enable-threads: true
     py-call-osafterfork: true
-  # galaxy:
-  #   database_connection: postgresql://galaxy:galaxyDBpwd@gpsql/galaxy_db
+  galaxy:
+    database_connection: postgresql://postgres@gpsql/galaxy
+ 
+
+
+# ==============================================================
+#galaxy_manage_clone: false
+#galaxy_manage_download: true
+#pip_extra_args: "--no-cache-dir --compile"
+
+# Cannot use 19.01 unless we make an archive. 
+# Must override this variable because constructed value is incorrect for download.
+#galaxy_download_url: "https://github.com/galaxyproject/galaxy/archive/release_18.09.tar.gz"
+
+#galaxy_server_dir: /galaxy/server
+#galaxy_config_dir: "{{ galaxy_server_dir }}/config"
+#galaxy_commit_id: release_18.09
+#galaxy_config_style: yaml
+# galaxy_manage_database: no
+#galaxy_config:
+#  uwsgi:
+#    virtualenv: "{{ galaxy_server_dir }}/.venv"
+#    http: 0.0.0.0:8080
+#    static-map:
+#      - /static/style={{ galaxy_server_dir }}/static/style/blue
+#      - /static={{ galaxy_server_dir }}/static
+#    pythonpath: "{{ galaxy_server_dir }}/lib"
+#    thunder-lock: true
+#    module: galaxy.webapps.galaxy.buildapp:uwsgi_app()
+#    buffer-size: 16384
+#    offload-threads: 2
+#    processes: 1
+#    threads: 4
+#    die-on-term: true
+#    master: true
+#    hook-master-start:
+#      - unix_signal:2 gracefully_kill_them_all
+#      - unix_signal:15 gracefully_kill_them_all
+#    enable-threads: true
+#    py-call-osafterfork: true
+#  galaxy:
+#    database_connection: postgresql://postgres@gpsql/galaxy
+#    #database_connection: postgresql://postgres:galaxyDBpwd@gpsql/galaxy_db

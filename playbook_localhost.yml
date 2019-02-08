@@ -7,26 +7,5 @@
 
 - hosts: localhost
   connection: local
-  pre_tasks:
-  - name: Create Galaxy user
-    user:
-      name: galaxy
-      system: yes
-      home: /galaxy
-
   roles:
   - galaxy
-
-# Client dependencies need to be installed before running this, so uncomment
-# once they are moved here
-#   post_tasks:
-#   - name: Run common startup to prefetch wheels
-#     shell: "{{ galaxy_server_dir }}/scripts/common_startup.sh"
-#     args:
-#         chdir: "{{ galaxy_server_dir }}"
-
-  # No need if using multi-stage build
-  #  - name: Clean up
-  #    apt:
-  #      autoclean: yes
-  #      autoremove: yes
