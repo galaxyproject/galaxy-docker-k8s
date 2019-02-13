@@ -1,2 +1,6 @@
-- src: https://github.com/galaxyproject/ansible-galaxy.git
-  name: galaxy
+# DO NOT install this role. Updates starting 1/24/19 instroduced issues that
+# have not been resolved as of yet. The version under roles/galaxy is from commit #7f6bf00 (1/21/19). 
+# The role should be reinstalled as soon as these issues are resolved.
+#
+#- src: https://github.com/galaxyproject/ansible-galaxy.git
+#  name: galaxy

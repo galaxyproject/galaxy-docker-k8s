@@ -1,12 +1,8 @@
-## galaxy role variables
-galaxy_create_user: yes
-#galaxy_manage_paths: yes
 galaxy_manage_clone: no
 galaxy_manage_download: yes
-galaxy_build_client: no
 
-#galaxy_layout: legacy
 galaxy_server_dir: /galaxy/server
+galaxy_config_dir: "{{ galaxy_server_dir }}/config"
 
 galaxy_config_style: yaml
 galaxy_download_url: "https://github.com/galaxyproject/galaxy/archive/release_18.09.tar.gz"
@@ -14,14 +10,9 @@ galaxy_commit_id: release_18.09
 
 pip_extra_args: "--no-cache-dir --compile"
 
-galaxy_user: galaxy
-
-#do we need this???
-galaxy_group: galaxy 
-
 galaxy_config:
   uwsgi:
-    virtualenv: "{{ galaxy_venv_dir }}"
+    virtualenv: "{{ galaxy_server_dir }}/.venv"
     pythonpath: "{{ galaxy_server_dir }}/lib"
     module: galaxy.webapps.galaxy.buildapp:uwsgi_app()
     http: 0.0.0.0:8080

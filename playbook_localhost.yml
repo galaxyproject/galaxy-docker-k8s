@@ -7,6 +7,11 @@
 
 - hosts: localhost
   connection: local
-  become: yes
+  pre_tasks:
+    - name: Create Galaxy user
+      user:
+        name: galaxy
+        system: yes
+        home: /galaxy
   roles:
   - galaxy

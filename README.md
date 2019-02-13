@@ -8,43 +8,53 @@ cd galaxy-kube-playbook
 ```
 
 2. Install required/dependent Ansible roles
-```
-ansible-galaxy install -r requirements_roles.yml -p roles
-```
+
+The current role is preinstalled. (*this is due to an incompatibility issue with
+the latest version of the ansible-galaxy role*).
+
 
 ## Build a container image
-To build an image that uses SQLite, run the following command:
+To build an image that uses SQLite, comment out the following lines in
+`group_vars/all`:
+
+```
+  galaxy:
+    database_connection: postgresql://galaxy@gpsql/galaxy
+```
+
+Then run the following command:
 ```
 docker build -t galaxy .
 ```
 
- To build the container so it uses an external PostgreSQL database, follow
- below steps. There are at least a few ways to go about initializing the
- database: (a) create it as part of the Galaxy container build process; (b)
- import an existing schema at Galaxy start; or (c) download an archive with
- an empty database at desired migration. Below are the notes for using the (a)
- method; for option (c), a pre-built database archive can be downloaded from
- https://galaxy-helm.s3.amazonaws.com/galaxy-db-146.tar.gz.
+To build the container so it uses an external PostgreSQL database, follow
+below steps. There are at least a few ways to go about initializing the
+database: (a) create it as part of the Galaxy container build process; (b)
+import an existing schema at Galaxy start; or (c) download an archive with
+an empty database at desired migration. Below are the notes for using the (a)
+method; for option (c), a pre-built database archive can be downloaded from
+https://galaxy-helm.s3.amazonaws.com/galaxy-db-146.tar.gz.
 
 1. It is necessary to link the Galaxy build container and the Postgres one. For
-this, we need to create a dedicated network so the `docker build` command can
-link to a running Postgres container:
+this, we need to create a dedicated bridge network so the `docker build` 
+command can link to a running Postgres container:
 ```
 docker network create gnet
 ```
 
 2. Start the Postgres container with the newly created network and provide a
-persistent volume path on the host where the database files will be persisted:
+volume name on the host where the database files will be persisted:
 ```
-docker run --rm -e POSTGRES_DB=galaxy -e POSTGRES_PASSWORD=galaxyDBpwd -P \
---network gnet --name gpsql \
--v /tmp/docker/volumes/postgres:/var/lib/postgresql/data postgres:10.6
+docker run --rm -e POSTGRES_DB=galaxy -P --network gnet --name gpsql \
+-v galaxydb:/var/lib/postgresql/data postgres:10.6
 ```
+If the volume `galaxydb` does not exist, it will be created.
 
-3. Edit `group_vars/all` to uncomment the Galaxy link to the database:
+
+3. Edit `group_vars/all` to uncomment (if needed) the Galaxy link to the database:
 ```
   galaxy:
-    database_connection: postgresql://galaxy:galaxyDBpwd@gpsql/galaxy
+    database_connection: postgresql://galaxy@gpsql/galaxy
 ```
 
 4. Build the Galaxy image:
@@ -56,7 +66,7 @@ You may stop the Postgres container after the Galaxy image has been built.
 ## Run the container
 To run the SQLite container and get an interactive shell, run the following:
 ```
-docker run -it -p 8080:8080 galaxy bash
+docker run -p 8080:8080 galaxy
 ```
 
 To start the Postgres version, first ensure that the Postgres container is running (refer to step 2
@@ -64,11 +74,17 @@ in the previous section).
 
 Then start the Galaxy container:
 ```
-docker run -it --rm --network gnet -p 8080:8080 galaxy bash
+docker run --rm --network gnet -p 8080:8080 galaxy
 ```
-To start Galaxy in the 'single-container' configuration, run `sh run.sh` within
-the container; once it starts, Galaxy will be available on the host under
-`localhost:8080`.
+Optionally you may start the container in detached mode:
+```
+docker run -d --rm --network gnet -p 8080:8080 galaxy
+```
+
+This will start Galaxy in the 'single-container' configuration.  Galaxy will be available on the
+host under `localhost:8080`.
+
+***The following sections need revision:***
 
 Alternatively, to start web handlers and job handlers as separate containers,
 we need to do the following.
