@@ -2,6 +2,8 @@
 # break the image build. Until these issues have been resolved, this
 # requirement specifies a commit from 1/21/19. The version should be removed as
 # soon as these issues are resolved.
-- src: https://github.com/galaxyproject/ansible-galaxy.git 
-  name: galaxy
-  version: 9033be3db99c9288fc34f70ab503c65931bb5415
+#
+#  TEMPORARITY COMMENTED OUT (see commit 696f17)
+#- src: https://github.com/galaxyproject/ansible-galaxy.git 
+#  name: galaxy
+#  version: 9033be3db99c9288fc34f70ab503c65931bb5415
