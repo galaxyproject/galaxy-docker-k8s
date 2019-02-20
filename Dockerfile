@@ -1,21 +1,24 @@
 FROM ubuntu:18.04 as builder
 ARG DEBIAN_FRONTEND=noninteractive 
+ARG ROOT_DIR=/galaxy
+ARG SERVER_DIR=$ROOT_DIR/server 
 
 # Install misc. build tools
 RUN apt-get -qq update && apt-get install -y --no-install-recommends \
       apt-transport-https \
       git \
       make \
-      npm \
-      nodejs \
+#      npm \
+#      nodejs \
       python-pip \
       python-virtualenv \ 
       software-properties-common \ 
       sudo \
       virtualenv \
-      wget \
-      && pip install requests \
-      && npm install -g yarn 
+      wget 
+#     wget \
+#      && pip install requests \
+#      && npm install -g yarn 
 
 # Install ansible
 RUN apt-add-repository -y ppa:ansible/ansible \
@@ -26,17 +29,25 @@ WORKDIR /tmp/ansible
 COPY . .
 RUN ansible-playbook -i localhost, playbook_localhost.yml
 
-# Latest possible place to declare these vars (TODO: move up when done with dev)
-ARG ROOT_DIR=/galaxy
-ARG SERVER_DIR=$ROOT_DIR/server 
 
-## Build the client; remove node_modules
+# remove node_modules
 WORKDIR $SERVER_DIR
-RUN make client-production && rm $SERVER_DIR/client/node_modules -rf
+RUN rm -rf client/node_modules
 
-#Run common startup to prefetch wheels
-RUN ./scripts/common_startup.sh
+# remove .git and .ci
+RUN rm -rf .git && rm -rf .ci
 
+## Latest possible place to declare these vars (TODO: move up when done with dev)
+#ARG ROOT_DIR=/galaxy
+#ARG SERVER_DIR=$ROOT_DIR/server 
+#
+### Build the client; remove node_modules
+#WORKDIR $SERVER_DIR
+#RUN make client-production && rm $SERVER_DIR/client/node_modules -rf
+#
+##Run common startup to prefetch wheels
+#RUN ./scripts/common_startup.sh
+#
 # Start new build stage for final image
 FROM ubuntu:18.04
 ARG DEBIAN_FRONTEND=noninteractive 
@@ -58,10 +69,10 @@ WORKDIR $ROOT_DIR
 # Copy galaxy files to final image
 # The chown values MUST be hardcoded (see #35018 at github.com/moby/moby)
 COPY --chown=galaxy:galaxy --from=builder $ROOT_DIR .
-
-WORKDIR $SERVER_DIR
-EXPOSE 8080
-USER $GALAXY_USER
-
-# and run it!
-CMD . .venv/bin/activate && uwsgi --yaml config/galaxy.yml
+#
+#WORKDIR $SERVER_DIR
+#EXPOSE 8080
+#USER $GALAXY_USER
+#
+## and run it!
+#CMD . .venv/bin/activate && uwsgi --yaml config/galaxy.yml

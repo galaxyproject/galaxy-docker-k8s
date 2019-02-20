@@ -1,4 +1,1 @@
-*
-!group_vars
-!roles
-!playbook_localhost.yml
+debug

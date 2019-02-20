@@ -1,12 +1,18 @@
-galaxy_manage_clone: no
-galaxy_manage_download: yes
+galaxy_manage_clone: yes
+galaxy_manage_download: no
 
 galaxy_server_dir: /galaxy/server
-galaxy_config_dir: "{{ galaxy_server_dir }}/config"
+
+galaxy_layout: legacy-improved
 
 galaxy_config_style: yaml
-galaxy_download_url: "https://github.com/galaxyproject/galaxy/archive/release_18.09.tar.gz"
+#galaxy_download_url: "https://github.com/galaxyproject/galaxy/archive/release_18.09.tar.gz"
+
+#keep this for now, then update to 19.01 or dev
 galaxy_commit_id: release_18.09
+
+galaxy_build_client: yes 
+galax_client_make_targer: client-production
 
 pip_extra_args: "--no-cache-dir --compile"
 
