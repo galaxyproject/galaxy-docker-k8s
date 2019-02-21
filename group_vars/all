@@ -4,11 +4,11 @@ galaxy_layout: legacy-improved
 
 galaxy_config_style: yaml
 
-#keep this for now, then update to 19.01
+  #TODO change to 19.01
 galaxy_commit_id: release_18.09
 
-galaxy_build_client: no
-#galaxy_client_make_target: client-production
+galaxy_build_client: yes
+galaxy_client_make_target: client-production
 
 pip_extra_args: "--no-cache-dir --compile"
 

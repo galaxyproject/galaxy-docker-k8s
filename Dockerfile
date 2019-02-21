@@ -8,16 +8,17 @@ RUN apt-get -qq update && apt-get install -y --no-install-recommends \
       apt-transport-https \
       git \
       make \
-      npm \
-      nodejs \
+#      npm \
+#      nodejs \
       python-pip \
       python-virtualenv \ 
       software-properties-common \ 
       sudo \
       virtualenv \
-      wget \
-      && pip install requests \
-      && npm install -g yarn 
+      wget
+#      wget \
+#      && pip install requests \
+#      && npm install -g yarn 
 
 # Install ansible
 RUN apt-add-repository -y ppa:ansible/ansible \
@@ -28,26 +29,21 @@ WORKDIR /tmp/ansible
 COPY . .
 RUN ansible-playbook -i localhost, playbook_localhost.yml
 
-
-# remove node_modules
-#WORKDIR $SERVER_DIR
-#RUN rm -rf client/node_modules
-
-# remove .git and .ci
+# remove node files
 WORKDIR $SERVER_DIR
-RUN rm -rf .git && rm -rf .ci
+RUN rm -rf client/node_modules
+RUN rm -rf .venv/bin/node
+RUN rm -rf .venv/include/node
+RUN rm -rf .venv/lib/node_modules
+RUN rm -rf .venv/src/node*
 
-## Latest possible place to declare these vars (TODO: move up when done with dev)
-#ARG ROOT_DIR=/galaxy
-#ARG SERVER_DIR=$ROOT_DIR/server 
-#
-## Build the client; remove node_modules
-WORKDIR $SERVER_DIR
-RUN make client-production && rm $SERVER_DIR/client/node_modules -rf
+# Remove .git and other unnecessary files
+RUN rm -rf .git
+RUN rm -rf .ci
+RUN rm -rf doc
+RUN rm -rf test
+RUN rm -rf test-data
 
-##Run common startup to prefetch wheels
-#RUN ./scripts/common_startup.sh
-#
 # Start new build stage for final image
 FROM ubuntu:18.04
 ARG DEBIAN_FRONTEND=noninteractive 
@@ -70,9 +66,9 @@ WORKDIR $ROOT_DIR
 # The chown values MUST be hardcoded (see #35018 at github.com/moby/moby)
 COPY --chown=galaxy:galaxy --from=builder $ROOT_DIR .
 #
-WORKDIR $SERVER_DIR
-EXPOSE 8080
-USER $GALAXY_USER
+#WORKDIR $SERVER_DIR
+#EXPOSE 8080
+#USER $GALAXY_USER
 #
 ## and run it!
 #CMD . .venv/bin/activate && uwsgi --yaml config/galaxy.yml
