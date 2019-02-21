@@ -1,14 +1,14 @@
-galaxy_manage_clone: no
-galaxy_manage_download: yes
-
-galaxy_server_dir: /galaxy/server
-galaxy_config_dir: "{{ galaxy_server_dir }}/config"
-
+galaxy_build_client: yes
+galaxy_client_make_target: client-production
 galaxy_config_style: yaml
-galaxy_download_url: "https://github.com/galaxyproject/galaxy/archive/release_18.09.tar.gz"
-galaxy_commit_id: release_18.09
+galaxy_commit_id: release_19.01
+galaxy_layout: legacy-improved
+galaxy_server_dir: /galaxy/server
 
 pip_extra_args: "--no-cache-dir --compile"
+
+#TODO change to galaxy_virtualenv_command after role updated
+pip_virtualenv_command: /usr/bin/python2 -m virtualenv
 
 galaxy_config:
   uwsgi:
@@ -33,4 +33,3 @@ galaxy_config:
     py-call-osafterfork: true
   galaxy:
     database_connection: postgresql://postgres@gpsql/galaxy
- 

@@ -1,21 +1,23 @@
+# Declare+assign variables before first FROM to use in all build stages.
+# NOTE: the value of GALAXY_USER must be also hardcoded in the COPY instruction in the final stage
+ARG DEBIAN_FRONTEND=noninteractive
+ARG ROOT_DIR=/galaxy
+ARG SERVER_DIR=$ROOT_DIR/server
+ARG GALAXY_USER=galaxy
+
 FROM ubuntu:18.04 as builder
-ARG DEBIAN_FRONTEND=noninteractive 
+ARG DEBIAN_FRONTEND
+ARG ROOT_DIR
+ARG SERVER_DIR
+ARG GALAXY_USER
 
 # Install misc. build tools
 RUN apt-get -qq update && apt-get install -y --no-install-recommends \
       apt-transport-https \
       git \
       make \
-      npm \
-      nodejs \
-      python-pip \
-      python-virtualenv \ 
-      software-properties-common \ 
-      sudo \
-      virtualenv \
-      wget \
-      && pip install requests \
-      && npm install -g yarn 
+      python-virtualenv \
+      software-properties-common
 
 # Install ansible
 RUN apt-add-repository -y ppa:ansible/ansible \
@@ -26,26 +28,17 @@ WORKDIR /tmp/ansible
 COPY . .
 RUN ansible-playbook -i localhost, playbook_localhost.yml
 
-# Latest possible place to declare these vars (TODO: move up when done with dev)
-ARG ROOT_DIR=/galaxy
-ARG SERVER_DIR=$ROOT_DIR/server 
-
-## Build the client; remove node_modules
+# remove files not needed in production (node, .git, etc...)
 WORKDIR $SERVER_DIR
-RUN make client-production && rm $SERVER_DIR/client/node_modules -rf
-
-#Run common startup to prefetch wheels
-RUN ./scripts/common_startup.sh
+RUN rm -rf client/node_modules .venv/bin/node .venv/include/node .venv/lib/node_modules \
+      .venv/src/node* .git .ci doc test test-data
 
 # Start new build stage for final image
 FROM ubuntu:18.04
-ARG DEBIAN_FRONTEND=noninteractive 
-# Declare new var + redeclare old vars to use at this stage
-# (TODO: move up when done with dev)
-# NOTE: the value of GALAXY_USER is hardcoded in the COPY instruction below
-ARG GALAXY_USER=galaxy
-ARG ROOT_DIR=/galaxy
-ARG SERVER_DIR=$ROOT_DIR/server 
+ARG DEBIAN_FRONTEND
+ARG ROOT_DIR
+ARG SERVER_DIR
+ARG GALAXY_USER
 
 # Install galaxy runtime requirements; clean up; add user+group; make dir; change perms
 RUN apt-get -qq update && apt-get install -y --no-install-recommends python-virtualenv \
@@ -56,12 +49,13 @@ RUN apt-get -qq update && apt-get install -y --no-install-recommends python-virt
 
 WORKDIR $ROOT_DIR
 # Copy galaxy files to final image
-# The chown values MUST be hardcoded (see #35018 at github.com/moby/moby)
+# The chown value MUST be hardcoded (see #35018 at github.com/moby/moby)
 COPY --chown=galaxy:galaxy --from=builder $ROOT_DIR .
 
 WORKDIR $SERVER_DIR
 EXPOSE 8080
 USER $GALAXY_USER
+ENV PATH="$SERVER_DIR/.venv/bin:${PATH}"
 
 # and run it!
-CMD . .venv/bin/activate && uwsgi --yaml config/galaxy.yml
+#CMD . .venv/bin/activate && uwsgi --yaml config/galaxy.yml
