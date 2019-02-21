@@ -8,17 +8,16 @@ RUN apt-get -qq update && apt-get install -y --no-install-recommends \
       apt-transport-https \
       git \
       make \
-#      npm \
-#      nodejs \
+      npm \
+      nodejs \
       python-pip \
       python-virtualenv \ 
       software-properties-common \ 
       sudo \
       virtualenv \
-      wget 
-#     wget \
-#      && pip install requests \
-#      && npm install -g yarn 
+      wget \
+      && pip install requests \
+      && npm install -g yarn 
 
 # Install ansible
 RUN apt-add-repository -y ppa:ansible/ansible \
@@ -31,20 +30,21 @@ RUN ansible-playbook -i localhost, playbook_localhost.yml
 
 
 # remove node_modules
-WORKDIR $SERVER_DIR
-RUN rm -rf client/node_modules
+#WORKDIR $SERVER_DIR
+#RUN rm -rf client/node_modules
 
 # remove .git and .ci
+WORKDIR $SERVER_DIR
 RUN rm -rf .git && rm -rf .ci
 
 ## Latest possible place to declare these vars (TODO: move up when done with dev)
 #ARG ROOT_DIR=/galaxy
 #ARG SERVER_DIR=$ROOT_DIR/server 
 #
-### Build the client; remove node_modules
-#WORKDIR $SERVER_DIR
-#RUN make client-production && rm $SERVER_DIR/client/node_modules -rf
-#
+## Build the client; remove node_modules
+WORKDIR $SERVER_DIR
+RUN make client-production && rm $SERVER_DIR/client/node_modules -rf
+
 ##Run common startup to prefetch wheels
 #RUN ./scripts/common_startup.sh
 #
@@ -70,9 +70,9 @@ WORKDIR $ROOT_DIR
 # The chown values MUST be hardcoded (see #35018 at github.com/moby/moby)
 COPY --chown=galaxy:galaxy --from=builder $ROOT_DIR .
 #
-#WORKDIR $SERVER_DIR
-#EXPOSE 8080
-#USER $GALAXY_USER
+WORKDIR $SERVER_DIR
+EXPOSE 8080
+USER $GALAXY_USER
 #
 ## and run it!
 #CMD . .venv/bin/activate && uwsgi --yaml config/galaxy.yml
