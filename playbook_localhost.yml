@@ -15,3 +15,8 @@
         home: /galaxy
   roles:
   - galaxy
+  post_tasks:
+    - name: Initialize welcome page
+      template:
+        src: files/welcome.html.j2
+        dest: "{{ galaxy_server_dir }}/static/welcome.html"
