@@ -1,0 +1,31 @@
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: galaxy-pv-volume
+  labels:
+    type: local
+    app: galaxy
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    # This is a host specific path where pre-configured Galaxy database files
+    # need to reside.
+    path: "/tmp/k8s/volumes/galaxy/data"
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: galaxy-pv-claim
+  labels:
+    app: galaxy
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
