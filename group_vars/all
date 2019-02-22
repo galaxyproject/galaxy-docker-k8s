@@ -1,14 +1,10 @@
-galaxy_build_client: yes
-galaxy_client_make_target: client-production
 galaxy_config_style: yaml
-galaxy_commit_id: release_19.01
 galaxy_layout: legacy-improved
 galaxy_server_dir: /galaxy/server
-
+galaxy_commit_id: release_19.01
+galaxy_virtualenv_command: /usr/bin/python2 -m virtualenv
 pip_extra_args: "--no-cache-dir --compile"
-
-#TODO change to galaxy_virtualenv_command after role updated
-pip_virtualenv_command: /usr/bin/python2 -m virtualenv
+galaxy_client_make_target: client-production
 
 galaxy_config:
   uwsgi:
