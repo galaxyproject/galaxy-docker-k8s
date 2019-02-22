@@ -12,6 +12,8 @@ spec:
   accessModes:
     - ReadWriteMany
   hostPath:
+    # This is a host specific path where pre-configured Galaxy database files
+    # need to reside.
     path: "/tmp/docker/volumes/postgres"
 ---
 kind: PersistentVolumeClaim

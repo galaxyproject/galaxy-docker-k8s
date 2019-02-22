@@ -12,8 +12,7 @@ spec:
   accessModes:
     - ReadWriteMany
   hostPath:
-    # This is a host specific path where pre-configured Galaxy database files
-    # need to reside.
+    # This is a host specific path where Galaxy files will be placed.
     path: "/tmp/k8s/volumes/galaxy/data"
 ---
 kind: PersistentVolumeClaim
