@@ -6,6 +6,14 @@ galaxy_virtualenv_command: /usr/bin/python2 -m virtualenv
 pip_extra_args: "--no-cache-dir --compile"
 galaxy_client_make_target: client-production
 
+
+
+galaxy_fetch_dependencies: no
+galaxy_manage_database: no
+galaxy_build_client: no
+
+
+
 galaxy_config:
   uwsgi:
     virtualenv: "{{ galaxy_server_dir }}/.venv"

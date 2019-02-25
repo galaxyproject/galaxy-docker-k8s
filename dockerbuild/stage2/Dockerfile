@@ -1,31 +1,6 @@
-# Declare+assign variables before first FROM to use in all build stages.
-# NOTE: the value of GALAXY_USER must be also hardcoded in the COPY instruction in the final stage
+# Stage-2 build: Run min-builder playbook
+FROM build1:final
 ARG DEBIAN_FRONTEND=noninteractive
-ARG ROOT_DIR=/galaxy
-ARG SERVER_DIR=$ROOT_DIR/server
-ARG GALAXY_USER=galaxy
-
-FROM ubuntu:18.04 as builder
-ARG DEBIAN_FRONTEND
-ARG ROOT_DIR
-ARG SERVER_DIR
-ARG GALAXY_USER
-
-# Install misc. build tools
-RUN apt-get -qq update && apt-get install -y --no-install-recommends \
-      apt-transport-https \
-      git \
-      make \
-      python-virtualenv \
-      software-properties-common
-
-# Install ansible
-RUN apt-add-repository -y ppa:ansible/ansible \
-      && apt-get -qq update && apt-get install -y --no-install-recommends ansible
-
-
-# NOTHING CHANGES ABOVE: prereqs + ansible
-
 
 # Run ansible-galaxy
 WORKDIR /tmp/ansible
