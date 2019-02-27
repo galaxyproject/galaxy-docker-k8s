@@ -1,9 +1,10 @@
 # vim:set ft=dockerfile:
-# Image-2: Pre-build galaxy to be used as base image for subsequent builds
+
+# Build image-0: Pre-build galaxy to be used as base image for subsequent builds
 FROM ubuntu:18.04
 ARG DEBIAN_FRONTEND=noninteractive
 
-# Install build tools
+# Install build dependencies + ansible
 RUN set -xe; \
     apt-get -qq update \
     && apt-get install -y --no-install-recommends \
