@@ -1,0 +1,17 @@
+---
+- hosts: localhost
+  connection: local
+  #  vars:
+  #    galaxy_manage_clone: yes
+  #    galaxy_config_style: yaml
+  #    galaxy_layout: legacy-improved
+  #    galaxy_server_dir: /galaxy/server
+  #    galaxy_commit_id: release_19.01
+  #    galaxy_virtualenv_command: "/usr/bin/python2 -m virtualenv"
+  #    foo43: "/usr/bin/python2 -m virtualenv"
+  #    pip_extra_args: "--no-cache-dir --compile"
+  #    galaxy_fetch_dependencies: no
+  #    galaxy_manage_database: no
+  #    galaxy_build_client: no
+  roles:
+  - galaxy

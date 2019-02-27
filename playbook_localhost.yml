@@ -7,12 +7,12 @@
 
 - hosts: localhost
   connection: local
-  pre_tasks:
-    - name: Create Galaxy user
-      user:
-        name: galaxy
-        system: yes
-        home: /galaxy
+  #  pre_tasks:
+  #    - name: Create Galaxy user
+  #      user:
+  #        name: galaxy
+  #        system: yes
+  #        home: /galaxy
   roles:
   - galaxy
   post_tasks:

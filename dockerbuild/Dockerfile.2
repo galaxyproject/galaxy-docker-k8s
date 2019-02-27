@@ -1,0 +1,11 @@
+# Image-2 build: Install python virtualenv 
+FROM ubuntu:18.04
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN set -xe; \
+    apt-get -qq update \
+    && apt-get install -y --no-install-recommends \
+        python-virtualenv \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/*

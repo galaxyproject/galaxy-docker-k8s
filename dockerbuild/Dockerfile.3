@@ -1,0 +1,182 @@
+# vim:set ft=dockerfile:
+
+#
+#
+#
+# Image-3: Pre-build galaxy to be used as a source for coppying 
+#FROM img1:final
+FROM ubuntu:18.04
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN set -xe; \
+    apt-get -qq update \
+    && apt-get install -y --no-install-recommends \
+        apt-transport-https \
+        git \
+        make \
+        python-virtualenv \
+        software-properties-common \
+    \
+    && apt-add-repository -y ppa:ansible/ansible \
+    && apt-get -qq update \
+    && apt-get install -y --no-install-recommends \
+        ansible \
+    \
+    && apt-get autoremove -y && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/*
+
+
+#do we need to set .venv as a var?
+ARG GALAXY_LAYOUT=legacy-improved
+ARG GALAXY_SERVER_DIR=/galaxy/server
+ARG GALAXY_COMMIT_ID=release_19.01
+ARG PIP_EXTRA_ARGS="--no-cache-dir --compile"
+ARG GALAXY_BUILD_CLIENT=false
+ARG GALAXY_VIRTUALENV_COMMAND="/usr/bin/python2 -m virtualenv"
+
+    #GALAXY_CLIENT_MAKE_TARGET="client-production" \
+##    GALAXY_MANAGE_DATABASE="no" \
+
+
+#ENV GALAXY_LAYOUT legacy-improved
+#ENV GALAXY_SERVER_DIR /galaxy/server
+#ENV GALAXY_COMMIT_ID release_19.01
+#ENV PIP_EXTRA_ARGS --no-cache-dir --compile
+#ENV GALAXY_BUILD_CLIENT false
+#ENV GALAXY_VIRTUALENV_COMMAND " /usr/bin/python2 -m virtualenv "
+
+
+#ENV GALAXY_LAYOUT="legacy-improved" \
+#    GALAXY_SERVER_DIR="/galaxy/server" \
+#    GALAXY_COMMIT_ID="release_19.01" \
+#    GALAXY_VIRTUALENV_COMMAND="/usr/bin/python2 -m virtualenv" \
+#    PIP_EXTRA_ARGS=\'--no-cache-dir --compile\' \
+#    GALAXY_BUILD_CLIENT=false
+#    #GALAXY_CLIENT_MAKE_TARGET="client-production" \
+###    GALAXY_MANAGE_DATABASE="no" \
+
+
+
+WORKDIR /tmp/ansible
+COPY . .
+
+# this works
+#RUN ansible-playbook -i localhost, playbook.yml -e foo41='$FOO'
+# and this in the shell cmd: 
+# -e foo41='$FOO'
+
+#single parens are incorrect because they are not expanded!
+
+
+RUN ansible-playbook -i localhost, playbook.yml \
+    -e "galaxy_virtualenv_command='$GALAXY_VIRTUALENV_COMMAND'" \
+    -e galaxy_build_client=$GALAXY_BUILD_CLIENT \
+    -e galaxy_layout=$GALAXY_LAYOUT \
+    -e galaxy_server_dir=$GALAXY_SERVER_DIR \
+    -e galaxy_commit_id=$GALAXY_COMMIT_ID \
+    -e "pip_extra_args='$PIP_EXTRA_ARGS'" 
+
+
+#RUN ansible-playbook -i localhost, playbook.yml \
+#    -e galaxy_manage_clone=false \
+#    -e galaxy_layout='$GALAXY_LAYOUT' \
+#    -e galaxy_server_dir='$GALAXY_SERVER_DIR' \
+#    -e galaxy_commit_id='$GALAXY_COMMIT_ID' \
+#    -e galaxy_venv_dir='$GALAXY_VENV_DIR' \
+#    -e pip_extra_args='$PIP_EXTRA_ARGS' \
+#    -e galaxy_fetch_dependencies=false \
+#    -e galaxy_virtualenv_command='/usr/bin/python2 -m virtualenv'
+
+
+
+# TODO: do i need to remove apt artifacts here? I think so. test it.
+# but does it matter? it's an intermediate image, and it would add to rebuild time.
+
+#the only purpose for runnign galaxy is generating and loading up venv. Maybe client and the repo.
+
+# what about these?
+# remove files not needed in production (node, .git, etc...)
+# fix the variable 
+#ARG SERVER_DIR=/galaxy/server
+#WORKDIR $SERVER_DIR
+#RUN rm -rf client/node_modules .venv/bin/node .venv/include/node .venv/lib/node_modules \
+#      .venv/src/node* .git .ci doc test test-data
+
+##    GALAXY_CONFIG_STYLE="yaml" \
+#
+##use minimum
+#ENV GALAXY_LAYOUT="legacy-improved" \
+#    GALAXY_SERVER_DIR="/galaxy/server" \
+#    GALAXY_COMMIT_ID="release_19.01" \
+#    GALAXY_VENV_DIR=".venv" \
+#    #GALAXY_VIRTUALENV_COMMAND='/usr/bin/python2 -m virtualenv' \
+#    PIP_EXTRA_ARGS="--no-cache-dir --compile" \
+#    GALAXY_FETCH_DEPENDENCIES="yes" 
+#    #GALAXY_BUILD_CLIENT="yes"
+#    #GALAXY_CLIENT_MAKE_TARGET="client-production" \
+#
+##    GALAXY_MANAGE_DATABASE="no" \
+
+
+
+
+# Run ansible-galaxy
+# TODO currently using copied plabook; need to use one in parent dir.
+# added -c local
+#WORKDIR /tmp/ansible
+#COPY . .
+#RUN ansible-playbook -i localhost, playbook_localhost.yml
+
+
+
+
+
+
+    #-e galaxy_manage_clone=false \
+    #-e galaxy_layout="$GALAXY_LAYOUT" \
+    #-e galaxy_server_dir="$GALAXY_SERVER_DIR" \
+    #-e galaxy_commit_id="$GALAXY_COMMIT_ID" \
+    #-e galaxy_venv_dir="$GALAXY_VENV_DIR" \
+    #-e pip_extra_args="$PIP_EXTRA_ARGS" \
+    #-e galaxy_fetch_dependencies=false \
+    #-e galaxy_virtualenv_command='/usr/bin/python2 -m virtualenv' \
+
+
+
+# TODO: do i need to remove apt artifacts here? I think so. test it.
+# but does it matter? it's an intermediate image, and it would add to rebuild time.
+
+#the only purpose for runnign galaxy is generating and loading up venv. Maybe client and the repo.
+
+# what about these?
+# remove files not needed in production (node, .git, etc...)
+# fix the variable 
+#ARG SERVER_DIR=/galaxy/server
+#WORKDIR $SERVER_DIR
+#RUN rm -rf client/node_modules .venv/bin/node .venv/include/node .venv/lib/node_modules \
+#      .venv/src/node* .git .ci doc test test-data
+
+
+#galaxy_config:
+#  uwsgi:
+#    virtualenv: "{{ galaxy_server_dir }}/.venv"
+#    pythonpath: "{{ galaxy_server_dir }}/lib"
+#    module: galaxy.webapps.galaxy.buildapp:uwsgi_app()
+#    http: 0.0.0.0:8080
+#    static-map:
+#      - /static/style={{ galaxy_server_dir }}/static/style/blue
+#      - /static={{ galaxy_server_dir }}/static
+#    thunder-lock: true
+#    buffer-size: 16384
+#    offload-threads: 2
+#    processes: 1
+#    threads: 4
+#    die-on-term: true
+#    master: true
+#    hook-master-start:
+#      - unix_signal:2 gracefully_kill_them_all
+#      - unix_signal:15 gracefully_kill_them_all
+#    enable-threads: true
+#    py-call-osafterfork: true
+#  galaxy:
+#    database_connection: postgresql://postgres@gpsql/galaxy
