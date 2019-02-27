@@ -1,9 +1,18 @@
-image-1: base for running ansible playbook
-- from ubuntu
-- install build tools and ansible
-
-image-2: base for final image
-- from ubuntu
+Dockerfile.1: build base for final image
+- FROM ubuntu:18.04
 - install python-virtualenv
 
-image-3: run playbook to use as src for copying stuff 
+Dockerfile.2: build intermediate base w/prebuilt galaxy
+- FROM ubuntu:18.04
+- install build tools and ansible
+- run playbook
+
+Dockerfile.3: build base for final image, then final image 
+- FROM: image-2 as builder
+- rerun playbook
+- remove build artifacts and unnecessary files
+- FROM: image-1
+- adduser
+- mkdir + chown
+- copy galaxy files from builder
+- prepare runtime (workdir, expose, user, path)

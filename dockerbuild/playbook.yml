@@ -1,17 +1,47 @@
 ---
+# file: playbook_localhost.yml
+#   Shortcut to run install tasks on the localhost without setting up an inventory.
+#
+# Run roles locally via following command:
+#   ansible-playbook -i localhost, playbook_localhost.yml [-e var=val]* --tags=<tag[,tag]> --skip-tags=<tag[,tag]>
+
 - hosts: localhost
   connection: local
-  #  vars:
-  #    galaxy_manage_clone: yes
-  #    galaxy_config_style: yaml
-  #    galaxy_layout: legacy-improved
-  #    galaxy_server_dir: /galaxy/server
-  #    galaxy_commit_id: release_19.01
-  #    galaxy_virtualenv_command: "/usr/bin/python2 -m virtualenv"
-  #    foo43: "/usr/bin/python2 -m virtualenv"
-  #    pip_extra_args: "--no-cache-dir --compile"
-  #    galaxy_fetch_dependencies: no
-  #    galaxy_manage_database: no
-  #    galaxy_build_client: no
+  vars:
+    galaxy_config_style: yaml
+    galaxy_layout: legacy-improved
+    galaxy_server_dir: /galaxy/server
+    galaxy_commit_id: release_19.01
+    galaxy_virtualenv_command: /usr/bin/python2 -m virtualenv
+    pip_extra_args: "--no-cache-dir --compile"
+    galaxy_client_make_target: client-production
+    galaxy_config:
+      uwsgi:
+        virtualenv: "{{ galaxy_server_dir }}/.venv"
+        pythonpath: "{{ galaxy_server_dir }}/lib"
+        module: galaxy.webapps.galaxy.buildapp:uwsgi_app()
+        http: 0.0.0.0:8080
+        static-map:
+          - /static/style={{ galaxy_server_dir }}/static/style/blue
+          - /static={{ galaxy_server_dir }}/static
+        thunder-lock: true
+        buffer-size: 16384
+        offload-threads: 2
+        processes: 1
+        threads: 4
+        die-on-term: true
+        master: true
+        hook-master-start:
+          - unix_signal:2 gracefully_kill_them_all
+          - unix_signal:15 gracefully_kill_them_all
+        enable-threads: true
+        py-call-osafterfork: true
+      galaxy:
+        database_connection: postgresql://postgres@gpsql/galaxy
   roles:
   - galaxy
+  post_tasks:
+    - name: Initialize welcome page
+      template:
+        src: files/welcome.html.j2
+        dest: "{{ galaxy_server_dir }}/static/welcome.html"

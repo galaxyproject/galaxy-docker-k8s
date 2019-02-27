@@ -1,11 +1,28 @@
-# Image-2 build: Install python virtualenv 
+# vim:set ft=dockerfile:
+# Image-2: Pre-build galaxy to be used as base image for subsequent builds
 FROM ubuntu:18.04
 ARG DEBIAN_FRONTEND=noninteractive
 
+# Install build tools
 RUN set -xe; \
     apt-get -qq update \
     && apt-get install -y --no-install-recommends \
+        apt-transport-https \
+        git \
+        make \
         python-virtualenv \
-    && apt-get autoremove -y \
-    && apt-get clean \
+        software-properties-common \
+    \
+    && apt-add-repository -y ppa:ansible/ansible \
+    && apt-get -qq update \
+    && apt-get install -y --no-install-recommends \
+        ansible \
+    \
+    && apt-get autoremove -y && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/*
+
+WORKDIR /tmp/ansible
+COPY . .
+
+# Run playbook to install Galaxy
+RUN ansible-playbook -i localhost, playbook.yml
