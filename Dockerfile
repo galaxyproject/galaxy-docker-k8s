@@ -26,7 +26,7 @@ RUN apt-add-repository -y ppa:ansible/ansible \
 # Run ansible-galaxy
 WORKDIR /tmp/ansible
 COPY . .
-RUN ansible-playbook -i localhost, playbook_localhost.yml
+RUN ansible-playbook -i localhost, playbook.yml
 
 # remove files not needed in production (node, .git, etc...)
 WORKDIR $SERVER_DIR
