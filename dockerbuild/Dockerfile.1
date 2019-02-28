@@ -18,12 +18,13 @@ ARG ROOT_DIR=/galaxy
 ARG SERVER_DIR=$ROOT_DIR/server
 # NOTE: the value of GALAXY_USER must be also hardcoded in COPY in stage 4
 ARG GALAXY_USER=galaxy
+# For much faster build time override this with image0 (Dockerfile.0 build)
+#docker build --build-arg STAGE3_BASE=<image0 name>...
+ARG STAGE3_BASE=stage2_tools
 
-ARG mybase=foo
 
 # Stage-1
-#FROM ubuntu:18.04 AS stage1_virtualenv
-FROM $mybase AS stage1_virtualenv
+FROM ubuntu:18.04 AS stage1_virtualenv
 ARG DEBIAN_FRONTEND=noninteractive
 
 # Install python-virtualenv
@@ -60,19 +61,7 @@ RUN set -xe; \
 
 
 # Stage-3 
-# Override from command line to use prebuilt version (galaxy:image0)
-#docker build --build-arg BASE=
-#ARG BASE=stage2_tools
-
-
-ARG base=foo
-
-FROM ${base:-galaxy:image0} AS build_stage2
-
-#FROM galaxy:image0 AS stage3_playbook
-
-
-
+FROM $STAGE3_BASE AS stage3_playbook
 ARG DEBIAN_FRONTEND=noninteractive
 ARG SERVER_DIR
 
