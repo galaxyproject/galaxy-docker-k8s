@@ -15,7 +15,7 @@ the latest version of the ansible-galaxy role*).
 
 ## Build a container image
 To build an image that uses SQLite, comment out the following lines in
-`group_vars/all`:
+`playbook.yml`:
 
 ```
   galaxy:
@@ -51,7 +51,7 @@ docker run --rm -e POSTGRES_DB=galaxy -P --network gnet --name gpsql \
 If the volume `galaxydb` does not exist, it will be created.
 
 
-3. Edit `group_vars/all` to uncomment (if needed) the Galaxy link to the database:
+3. Edit `playbook.yml` to uncomment (if needed) the Galaxy link to the database:
 ```
   galaxy:
     database_connection: postgresql://galaxy@gpsql/galaxy
