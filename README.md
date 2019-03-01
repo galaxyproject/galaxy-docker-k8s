@@ -127,12 +127,12 @@ suitably adjusting the server name as defined in the job conf:
 /galaxy/server/scripts/galaxy-main -c config/galaxy.yml --server-name handler1
 ```
 
-***Speed-up image build-time***
+**Speed-up image build-time**
 
 *This section is a draft description of an experimental feature.*
 
-To improve development, image build time can be significantly reduced by using `Dockerfile.0` and
-`Dockerfile.1` instead of `Dockerfile`. The end result produces exactly the same images as with `Dockerfile`. 
+To improve development, image build time can be significantly reduced by using `Dockerfile.0`
+together with `Dockerfile'.
 
 Problem statement. During development, any change to playbook.yml (or the variables and/or files it
 utilizes) results in a Docker cache miss, and the entire playbook is re-run. However, a few particularly
@@ -143,26 +143,22 @@ installed by running the playbook:
 
 `docker build -f Dockerfile.0 --network gnet -t galaxy:image0 .`
 
-Then, use `Dockerfile.1` to build the final image. To use the intermediate-stage image0:
+Then, use `Dockerfile` to build the final image. To use the intermediate-stage image0:
 
-`docker build -f Dockerfile.1 --network gnet --build-arg STAGE3_BASE=galaxy:image0 -t galaxy:final .`
+`docker build --network gnet --build-arg STAGE2=galaxy:image0 -t galaxy:final .`
 
 This will use the prebuilt image0 as the base for the build stage that runs the playbook. The
 playbook will not re-clone the Git repository, reinstall dependencies, and rebuild the client. This
-will result in a much reduced build time for subsequent builds (35 sec vs. 6 min 35 sec).
+will result in a much reduced build time for subsequent builds (as tested: 35s vs. 6m 35s).
 
-To run Dockerfile.1 without using the prebuilt image, simply use:
-
-`docker build -f Dockerfile.1 --network gnet -t galaxy:final .`
-
-Following is a brief description of the build stages in `Dockerfile.0` and `Dockerfile.1`.
+Following is a brief description of the build stages in `Dockerfile.0` and `Dockerfile`.
 
 Dockerfile.0: build base w/prebuilt galaxy (image0)
 - FROM ubuntu
     - install build tools and ansible
     - run playbook
 
-Dockerfile.1: build final image (image1)
+Dockerfile: build final image (image1)
 - Stage 1: 
     - FROM ubuntu
     - install python-virtualenv
