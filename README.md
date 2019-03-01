@@ -145,11 +145,11 @@ installed by running the playbook:
 
 Then, use `Dockerfile` to build the final image. To use the intermediate-stage image0:
 
-`docker build --network gnet --build-arg STAGE2=galaxy:image0 -t galaxy:final .`
+`docker build --network gnet --build-arg BASE=galaxy:image0 -t galaxy:final .`
 
 This will use the prebuilt image0 as the base for the build stage that runs the playbook. The
 playbook will not re-clone the Git repository, reinstall dependencies, and rebuild the client. This
-will result in a much reduced build time for subsequent builds (as tested: 35s vs. 6m 35s).
+will result in a **much reduced** build time for subsequent builds.
 
 Following is a brief description of the build stages in `Dockerfile.0` and `Dockerfile`.
 
@@ -159,22 +159,15 @@ Dockerfile.0: build base w/prebuilt galaxy (image0)
     - run playbook
 
 Dockerfile: build final image (image1)
-- Stage 1: 
-    - FROM ubuntu
-    - install python-virtualenv
-
-- Stage 2: 
-    - FROM ubuntu
-    - install build tools and ansible
-
-- Stage 3:
+- Stage 1:
     - FROM: ubuntu OR image0 (prebuilt by Dockerfile.0)
+    - install build tools and ansible
     - run playbook
     - remove build artifacts + files not needed in container
-
-- Stage 4:
-    - FROM: stage 1
+- Stage 2:
+    - FROM ubuntu
+    - install python-virtualenv
     - create galaxy user+group
     - mkdir+chown galaxy directory
-    - copy galaxy files from stage 3
+    - copy galaxy files from stage 1
     - finalize container (workdir, expose, user, path)
