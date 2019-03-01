@@ -45,7 +45,7 @@ docker network create gnet
 2. Start the Postgres container with the newly created network and provide a
 volume name on the host where the database files will be persisted:
 ```
-docker run --rm -e POSTGRES_DB=galaxy -P --network gnet --name gpsql \
+docker run -d --rm -e POSTGRES_DB=galaxy -P --network gnet --name gpsql \
 -v galaxydb:/var/lib/postgresql/data postgres:10.6
 ```
 If the volume `galaxydb` does not exist, it will be created.
@@ -66,7 +66,7 @@ You may stop the Postgres container after the Galaxy image has been built.
 ## Run the container
 To run the SQLite container and get an interactive shell, run the following:
 ```
-docker run -p 8080:8080 galaxy
+docker run --rm -p 8080:8080 galaxy
 ```
 
 To start the Postgres version, first ensure that the Postgres container is running (refer to step 2
@@ -75,10 +75,6 @@ in the previous section).
 Then start the Galaxy container:
 ```
 docker run --rm --network gnet -p 8080:8080 galaxy
-```
-Optionally you may start the container in detached mode:
-```
-docker run -d --rm --network gnet -p 8080:8080 galaxy
 ```
 
 This will start Galaxy in the 'single-container' configuration.  Galaxy will be available on the
