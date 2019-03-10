@@ -1,0 +1,89 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: postgres-service
+  labels:
+    app: galaxy
+spec:
+  type: NodePort
+  ports: 
+    - port: 5432
+  selector:
+    app: galaxy
+    tier: db 
+---
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: postgres-pv
+  labels:
+    app: galaxy
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 1Gi
+  accessModes:
+    #because using hostpath
+    - ReadWriteOnce
+  hostPath:
+    # host-specific path for pre-configured Galaxy database files
+    path: "/tmp/docker/volumes/postgres"
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: postgres-pvc
+  labels:
+    app: galaxy
+spec:
+  storageClassName: manual
+  accessModes:
+    #because using hostpath
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: postgres-config
+  labels:
+    app: galaxy
+data:
+  POSTGRES_DB: galaxy
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: postgres-deploy
+  labels:
+    app: galaxy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: galaxy
+      tier: db
+  template:
+    metadata:
+      labels:
+        app: galaxy
+        tier: db
+    spec:
+      volumes: 
+        - name: postgres-storage
+          persistentVolumeClaim:
+            claimName: postgres-pvc
+      containers:
+        - name: postgres-container
+          image: postgres:10.6
+          imagePullPolicy: "IfNotPresent"
+          envFrom:
+          - configMapRef:
+              name: postgres-config
+          ports: 
+            - containerPort: 5432
+          volumeMounts:
+            - mountPath: "/var/lib/postgresql/data"
+              name: postgres-storage
