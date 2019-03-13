@@ -13,14 +13,15 @@ With that, we'll also need the `kubectl` utility.
 
 We'll also need to deploy [the Kubernetes Dashboard](https://kubernetes.io/docs/tasks/access-application-cluster/web-ui-dashboard/#deploying-the-dashboard-ui) and [the NGINX ingress](https://kubernetes.github.io/ingress-nginx/deploy/).
 
-Last, let's grab a copy of the Galaxy database from
+Now, let's grab a copy of the Galaxy database from
 <https://galaxy-helm.s3.amazonaws.com/galaxy-db-146.tar.gz>. For the default
 configuration, download the file to `/tmp/docker/volumes/postgres/` and extract
 the content.
 
 Next, create a directory for persisting Galaxy's data. By default, this is in
-`/tmp/k8s/volumes/galaxy/data`. Finally, clone this repo and change into the
-`k8s` subdirectory.
+`/tmp/k8s/volumes/galaxy/data`. 
+
+Finally, clone this repository and change into the `k8s` subdirectory.
 
 ## Deploy PostgreSQL
 
@@ -29,7 +30,7 @@ components required to run Postgres:
 
 ```bash
 kubectl create -f postgres-configmap.yml
-kubectl create -f postgres-storage.yml
+kubectl create -f postgres-pv.yml
 kubectl create -f postgres-deployment.yml
 kubectl create -f postgres-service.yml
 ```
