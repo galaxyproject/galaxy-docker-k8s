@@ -1,25 +1,28 @@
 An Ansible playbook for building a Galaxy container for Kubernetes.
 
-## Setup
+## Setup the environment for building the image
 1. Clone the playbook repo
 ```
 git clone https://github.com/CloudVE/galaxy-kube-playbook.git
 cd galaxy-kube-playbook
 ```
 
-2. Install required/dependent Ansible roles
-
-The current role is preinstalled. (*this is due to an incompatibility issue with
-the latest version of the ansible-galaxy role*).
+2. Make sure you have Ansible installed and then install required dependent 
+Ansible roles
+```
+ansible-galaxy install -r requirements_roles.yml -p roles
+```
 
 
 ## Build a container image
-To build an image that uses SQLite, comment out the following lines in
-`playbook.yml`:
 
+### Build a self-contained image with SQLite database
+This format of the image is useful for testing for example; the Postgres image
+below is the prefered method. To start, comment out the following lines in 
+`playbook.yml`:
 ```
   galaxy:
-    database_connection: postgresql://galaxy@gpsql/galaxy
+    database_connection: postgresql://galaxydbuser:42@gpsql/galaxy
 ```
 
 Then run the following command:
@@ -27,13 +30,15 @@ Then run the following command:
 docker build -t galaxy .
 ```
 
+### Build an image configured for the PostgreSQL database
 To build the container so it uses an external PostgreSQL database, follow
 below steps. There are at least a few ways to go about initializing the
 database: (a) create it as part of the Galaxy container build process; (b)
 import an existing schema at Galaxy start; or (c) download an archive with
-an empty database at desired migration. Below are the notes for using the (a)
-method; for option (c), a pre-built database archive can be downloaded from
-https://galaxy-helm.s3.amazonaws.com/galaxy-db-146.tar.gz.
+an empty database at desired migration. We'll cover options (a) and (c); for
+option (c) download a pre-built database archive from
+https://s3.amazonaws.com/galaxy-helm-dev/galaxy-db.tar.gz and extract it to
+`/tmp/docker/volumes/galaxy_postgres`
 
 1. It is necessary to link the Galaxy build container and the Postgres one. For
 this, we need to create a dedicated bridge network so the `docker build` 
@@ -43,18 +48,28 @@ docker network create gnet
 ```
 
 2. Start the Postgres container with the newly created network and provide a
-volume name on the host where the database files will be persisted:
+volume name on the host where the database files will be created if it does not
+already exist and the data will be persisted there. Update the password as 
+desired.
 ```
-docker run -d --rm -e POSTGRES_DB=galaxy -P --network gnet --name gpsql \
--v galaxydb:/var/lib/postgresql/data postgres:10.6
+docker run -d --rm -e POSTGRES_DB=galaxy -e POSTGRES_USER=galaxydbuser \
+-e POSTGRES_PASSWORD=42 -P --network gnet --name gpsql \
+-v galaxydbvolume:/var/lib/postgresql/data postgres:10.6
 ```
-If the volume `galaxydb` does not exist, it will be created.
 
+To use a pre-built database (i.e., option (c) above), change the command to use 
+a [bind volume](https://docs.docker.com/storage/bind-mounts/):
+```
+docker run -d --rm -e POSTGRES_DB=galaxy -e POSTGRES_USER=galaxydbuser \
+-e POSTGRES_PASSWORD=42 -P --network gnet --name gpsql \
+-v /tmp/docker/volumes/galaxy_postgres:/var/lib/postgresql/data postgres:10.6
+```
 
-3. Edit `playbook.yml` to uncomment (if needed) the Galaxy link to the database:
+3. If the password was updated in above command, correspondingly update the 
+database connection line in `playbook.yml`:
 ```
   galaxy:
-    database_connection: postgresql://galaxy@gpsql/galaxy
+    database_connection: postgresql://galaxydbuser:42@gpsql/galaxy
 ```
 
 4. Build the Galaxy image:
@@ -66,19 +81,19 @@ You may stop the Postgres container after the Galaxy image has been built.
 ## Run the container
 To run the SQLite container and get an interactive shell, run the following:
 ```
-docker run --rm -p 8080:8080 galaxy
+docker run --rm -p 8080:8080 galaxy bash
+uwsgi --yaml config/galaxy.yml
 ```
 
-To start the Postgres version, first ensure that the Postgres container is running (refer to step 2
-in the previous section). 
-
-Then start the Galaxy container:
+To start the Postgres version, first ensure that the Postgres container is 
+running (refer to step 2 in the previous section). Then start the container and 
+the Galaxy process:
 ```
-docker run --rm --network gnet -p 8080:8080 galaxy
+docker run --rm --network gnet -p 8080:8080 galaxy bash
+uwsgi --yaml config/galaxy.yml
 ```
 
-This will start Galaxy in the 'single-container' configuration.  Galaxy will be available on the
-host under `localhost:8080`.
+Galaxy will be available on the host under `localhost:8080`.
 
 ***The following sections need revision:***
 
