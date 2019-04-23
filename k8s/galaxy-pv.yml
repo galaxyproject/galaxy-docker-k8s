@@ -13,7 +13,7 @@ spec:
     - ReadWriteMany
   hostPath:
     # This is a host specific path where Galaxy files will be placed.
-    path: "/tmp/k8s/volumes/galaxy/data"
+    path: "<change-this-to-path-to-directory>"
 ---
 kind: PersistentVolumeClaim
 apiVersion: v1

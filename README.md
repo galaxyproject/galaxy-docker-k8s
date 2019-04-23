@@ -38,7 +38,10 @@ import an existing schema at Galaxy start; or (c) download an archive with
 an empty database at desired migration. We'll cover options (a) and (c); for
 option (c) download a pre-built database archive from
 https://s3.amazonaws.com/galaxy-helm-dev/galaxy-db.tar.gz and extract it to
-`/tmp/docker/volumes/galaxy_postgres`
+a directory on the host machine.  
+
+*If you are using a Mac, do not place the archive into the `/tmp` directory, 
+as it is periodically cleaned by the OS, so your data will not be persisted.*
 
 1. It is necessary to link the Galaxy build container and the Postgres one. For
 this, we need to create a dedicated bridge network so the `docker build` 
@@ -58,12 +61,14 @@ docker run -d --rm -e POSTGRES_DB=galaxy -e POSTGRES_USER=galaxydbuser \
 ```
 
 To use a pre-built database (i.e., option (c) above), change the command to use 
-a [bind volume](https://docs.docker.com/storage/bind-mounts/):
+a [bind mount](https://docs.docker.com/storage/bind-mounts/):
 ```
 docker run -d --rm -e POSTGRES_DB=galaxy -e POSTGRES_USER=galaxydbuser \
 -e POSTGRES_PASSWORD=42 -P --network gnet --name gpsql \
--v /tmp/docker/volumes/galaxy_postgres:/var/lib/postgresql/data postgres:10.6
+-v <path-to-directory>:/var/lib/postgresql/data postgres:10.6
 ```
+
+`<path-to-directory>` is a full or relative path to a directory on the host machine. 
 
 3. If the password was updated in above command, correspondingly update the 
 database connection line in `playbook.yml`:
