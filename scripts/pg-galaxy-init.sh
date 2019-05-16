@@ -8,7 +8,7 @@
 #In the above output, 32772 is the port number.
  
 
-USAGE="Usage: pg-galaxy-init port (see comments in file)"
+USAGE="Usage: pg-galaxy-init.sh port (see comments in file)"
 PORT=${1:?"${USAGE}"}
 
 set -e
