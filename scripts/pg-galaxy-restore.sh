@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Creates galaxy user+db, updates privileges/ownership in a new database inside postgres container
+# Restores galaxy from SQL script file inside postgres container. Galaxy user/db must exist.
 # Required argument: port number. To get the port number, run `docker ps`:
 # > docker ps
 #CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                     NAMES
@@ -8,15 +8,10 @@
 #
 #In the above output, 32772 is the port number.
 
-USAGE="Usage: pg-galaxy-init.sh port (see comments in file)"
+USAGE="Usage: pg-galaxy-restore.sh port < sql-dump-file (see comments in file)"
 PORT=${1:?"${USAGE}"}
 
 set -e
 
-psql -h localhost -p $1 -U postgres -v ON_ERROR_STOP=1 <<-EOSQL
-		CREATE DATABASE galaxy;
-		CREATE USER galaxydbuser;
-		ALTER ROLE galaxydbuser WITH PASSWORD '42';
-		GRANT ALL PRIVILEGES ON DATABASE galaxy TO galaxydbuser;
-		ALTER DATABASE galaxy OWNER TO galaxydbuser;
-EOSQL
+psql -h localhost -p $1 -U postgres -d galaxy
+	

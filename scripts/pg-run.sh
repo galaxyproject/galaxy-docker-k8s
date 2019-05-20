@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Start postgres container
+# Required argument: path to volume
+
 USAGE="Usage: pg-run.sh path-to-volume"
 VOLUMEPATH=${1:?"${USAGE}"}
 

@@ -32,16 +32,11 @@ docker build -t galaxy .
 
 ### Build an image configured for the PostgreSQL database
 To build the container so it uses an external PostgreSQL database, follow
-below steps. There are at least a few ways to go about initializing the
+the steps below. There are at least a few ways to go about initializing the
 database: (a) create it as part of the Galaxy container build process; (b)
-import an existing schema at Galaxy start; or (c) download an archive with
-an empty database at desired migration. We'll cover options (a) and (c); for
-option (c) download a pre-built database archive from
-https://s3.amazonaws.com/galaxy-helm-dev/galaxy-db.tar.gz and extract it to
-a directory on the host machine.  
-
-*If you are using a Mac, do not place the archive into the `/tmp` directory, 
-as it is periodically cleaned by the OS, so your data will not be persisted.*
+import an existing schema at Galaxy start; (c) download an archive with
+an empty database at desired migration; or (d) restore from a SQL script file 
+(created by the [pg_dump](https://www.postgresql.org/docs/10/app-pgdump.html) utility). 
 
 1. It is necessary to link the Galaxy build container and the Postgres one. For
 this, we need to create a dedicated bridge network so the `docker build` 
@@ -50,36 +45,51 @@ command can link to a running Postgres container:
 docker network create gnet
 ```
 
-2. Start the Postgres container with the newly created network and provide a
-volume name on the host where the database files will be created if it does not
-already exist and the data will be persisted there. Update the password as 
-desired.
+2. Run `pg-run.sh` to start the Postgres container with the newly created network providing a
+path to a [bind mount](https://docs.docker.com/storage/bind-mounts/)\* on the host machine where
+the database files will be created (if it does not already exist) and the data
+will be persisted:  
+``` 
+./scripts/pg-run.sh <path-to-directory>
 ```
-docker run -d --rm -e POSTGRES_DB=galaxy -e POSTGRES_USER=galaxydbuser \
--e POSTGRES_PASSWORD=42 -P --network gnet --name gpsql \
--v galaxydbvolume:/var/lib/postgresql/data postgres:10.6
+\**We suggest using a bind mount as opposed to a Docker volume because a bind
+mount offers more flexibility: you may need to access the database files (e.g.,
+to create a dump file or restore, etc.), and with a bind mount it's
+straightforward.*
+
+   *If you are using a Mac, do not place the archive into the `/tmp` directory, 
+as it is periodically cleaned by the OS, so your data will not be persisted properly.*
+
+3. Run `pg-galaxy-init.sh` to create the galaxy database user and database, and
+   change ownership and assign appropriate priviliges, providing the port number
+   of the Postgres container:
+```
+./scripts/pg-init.sh <port-number>
+```
+To get the container port number, run `docker ps`:
+```
+ > docker ps
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                     NAMES
+0ba2d68af1de        postgres:10.6       "docker-entrypoint.s…"   35 minutes ago      Up 35 minutes       0.0.0.0:32772->5432/tcp   gpsql
+#In the above output, 32772 is the port number. (scroll to the right)
 ```
 
-To use a pre-built database (i.e., option (c) above), change the command to use 
-a [bind mount](https://docs.docker.com/storage/bind-mounts/):
-```
-docker run -d --rm -e POSTGRES_DB=galaxy -e POSTGRES_USER=galaxydbuser \
--e POSTGRES_PASSWORD=42 -P --network gnet --name gpsql \
--v <path-to-directory>:/var/lib/postgresql/data postgres:10.6
-```
-
-`<path-to-directory>` is a full or relative path to a directory on the host machine. 
-
-3. If the password was updated in above command, correspondingly update the 
+4. If the password was updated in the above script, correspondingly update the 
 database connection line in `playbook.yml`:
 ```
   galaxy:
     database_connection: postgresql://galaxydbuser:42@gpsql/galaxy
 ```
 
-4. Build the Galaxy image:
+5. Optionally, you can restore the database from a SQL script file. To do that, run `pg-restore.sh`,
+providing the container port number as argument and the SQL script file as input:
 ```
-docker build --network gnet -t galaxy .
+./scripts/pg-restore.sh <port-number> < <sql-dump-file>
+```
+
+4. Run `galaxy-build.sh` to build the Galaxy image, providing an image name and an image tag:
+```
+./scripts/galaxy-build.sh <image-name> <image-tag>
 ```
 You may stop the Postgres container after the Galaxy image has been built.
 
@@ -91,11 +101,23 @@ uwsgi --yaml config/galaxy.yml
 ```
 
 To start the Postgres version, first ensure that the Postgres container is 
-running (refer to step 2 in the previous section). Then start the container and 
-the Galaxy process:
+running (refer to step 2 in the previous section). Then run `galaxy-run.sh`, providing the image
+name and an image tag: 
 ```
-docker run --rm --network gnet -p 8080:8080 galaxy bash
-uwsgi --yaml config/galaxy.yml
+./scripts/galaxy-run.sh <image-name> <image-tag>
+```
+
+Optionally, you may run `galaxy-run-root.sh`, which gives you root access to the container (should
+you need it).
+
+Then exec into the galaxy container:
+```
+> docker exec -it <galaxy-container-id> bash
+```
+and start the galaxy process (source the virtual env, then call uwsgi):
+```
+> . .venv/bin/activate
+> uwsgi --yaml config/galaxy.yml
 ```
 
 Galaxy will be available on the host under `localhost:8080`.
@@ -143,16 +165,14 @@ suitably adjusting the server name as defined in the job conf:
 /galaxy/server/scripts/galaxy-main -c config/galaxy.yml --server-name handler1
 ```
 
-**Speed-up image build-time**
-
-*This section is a draft description of an experimental feature.*
+## Speed-up image build-time
 
 To improve development, image build time can be significantly reduced by using `Dockerfile.0`
 together with `Dockerfile'.
 
-Problem statement. During development, any change to playbook.yml (or the variables and/or files it
-utilizes) results in a Docker cache miss, and the entire playbook is re-run. However, a few particularly
-lenghty tasks do not result in any changes to the final image. 
+During development, any change to playbook.yml (or the variables and/or files it utilizes) results
+in a Docker cache miss, and the entire playbook is re-run. However, a few particularly lenghty tasks
+do not result in any changes to the final image. 
 
 Solution. Use `Dockerfile.0` to prebuild an intermediate-stage image that contains the Galaxy files
 installed by running the playbook:
@@ -187,3 +207,21 @@ Dockerfile: build final image (image1)
     - mkdir+chown galaxy directory
     - copy galaxy files from stage 1
     - finalize container (workdir, expose, user, path)
+
+## Backup database to a SQL script file 
+
+1. Make sure your Postgres container is running (refer to step 2 of building a container image).
+
+2. Exec into the Postges container:
+```
+./scripts/pg-exec
+```
+
+3. Inside the container:
+```
+> cd /var/lib/postgresql/data
+> pg_dump -U postgres -d galaxy > galaxy_dump.sql
+```
+The file is now located at `<path-to-bind-mount>/data`
+
+For more information, refer to [PostgreSQL documentation](https://www.postgresql.org/docs/10/app-pgdump.html). 

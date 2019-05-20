@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Run galaxy container
 # Required arguments: image name + image tag
 
 USAGE="Usage: galaxy-run.sh image-name image-tag"

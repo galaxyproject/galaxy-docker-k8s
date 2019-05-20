@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Run galaxy container as root
 # Required arguments: image name + image tag
 
 USAGE="Usage: galaxy-run-root.sh image-name image-tag"
