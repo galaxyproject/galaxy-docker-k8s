@@ -35,7 +35,7 @@
       galaxy:
         database_connection: postgresql://galaxydbuser:42@gpsql/galaxy
   roles:
-  - galaxy
+    - galaxy
   post_tasks:
     - name: Initialize welcome page
       template:
