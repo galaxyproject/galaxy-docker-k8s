@@ -14,6 +14,8 @@
     galaxy_config_files:
       - src: files/job_conf.xml
         dest: "{{ galaxy_server_dir }}/config/job_conf.xml"
+      - src: files/welcome.html
+        dest: "{{ galaxy_server_dir }}/static/welcome.html"
     galaxy_config:
       uwsgi:
         virtualenv: "{{ galaxy_server_dir }}/.venv"
@@ -39,8 +41,3 @@
         database_connection: postgresql://galaxydbuser:42@gpsql/galaxy
   roles:
     - galaxy
-  post_tasks:
-    - name: Initialize welcome page
-      template:
-        src: files/welcome.html.j2
-        dest: "{{ galaxy_server_dir }}/static/welcome.html"
