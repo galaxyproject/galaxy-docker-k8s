@@ -1,0 +1,11 @@
+<!-- This file is included so that Galaxy installs conditional dependencies automatically.  -->
+<job_conf>
+    <plugins>
+        <plugin id="local" type="runner" load="galaxy.jobs.runners.local:LocalJobRunner" workers="4" />
+        <plugin id="k8s" type="runner" load="galaxy.jobs.runners.kubernetes:KubernetesJobRunner" />
+    </plugins>
+    <handlers assign_with="db-skip-locked" />
+    <destinations default="local">
+        <destination id="local" runner="local" />
+    </destinations>
+</job_conf>
