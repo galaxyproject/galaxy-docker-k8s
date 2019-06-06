@@ -1,15 +1,15 @@
-# Stage 1: 
+# Stage 1:
 # - base: ubuntu (default) OR prebuilt image0
 # - install build tools
 # - run playbook (image0 avoids rerunning lengthy tasks)
 # - remove build artifacts + files not needed in container
-# Stage 2: 
+# Stage 2:
 # - install python-virtualenv
 # - create galaxy user + group + directory
 # - copy galaxy files from stage 1
 # - finalize container (set path, user...)
 
-# Init ARGs 
+# Init ARGs
 ARG ROOT_DIR=/galaxy
 ARG SERVER_DIR=$ROOT_DIR/server
 # For much faster build time override this with image0 (Dockerfile.0 build):
@@ -31,6 +31,8 @@ RUN set -xe; \
         make \
         python-virtualenv \
         software-properties-common \
+        gcc \
+        libpython2.7 \
     && apt-add-repository -y ppa:ansible/ansible \
     && apt-get -qq update && apt-get install -y --no-install-recommends \
         ansible \
@@ -41,7 +43,7 @@ RUN set -xe; \
 WORKDIR /tmp/ansible
 RUN rm -rf *
 COPY . .
-RUN ansible-playbook -i localhost, playbook.yml
+RUN ansible-playbook -i localhost, playbook.yml -vv
 
 # Remove build artifacts + files not needed in container
 WORKDIR $SERVER_DIR
@@ -57,7 +59,7 @@ RUN rm -rf \
         test \
         test-data
 
-# Stage-2 
+# Stage-2
 FROM ubuntu:18.04
 ARG DEBIAN_FRONTEND=noninteractive
 ARG ROOT_DIR
@@ -68,6 +70,8 @@ ARG GALAXY_USER
 RUN set -xe; \
     apt-get -qq update && apt-get install -y --no-install-recommends \
         python-virtualenv \
+        vim \
+        libpython2.7 \
     && apt-get autoremove -y && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/*
 
