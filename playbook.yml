@@ -8,6 +8,7 @@
     galaxy_layout: legacy-improved
     galaxy_server_dir: /galaxy/server
     galaxy_commit_id: release_19.05
+    galaxy_repo: https://github.com/CloudVE/galaxy.git
     galaxy_clone_depth: 1
     galaxy_virtualenv_command: /usr/bin/python2 -m virtualenv
     pip_extra_args: "--no-cache-dir --compile"
