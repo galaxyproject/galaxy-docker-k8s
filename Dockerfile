@@ -72,6 +72,7 @@ RUN set -xe; \
         python-virtualenv \
         vim \
         libpython2.7 \
+        curl \
     && apt-get autoremove -y && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/*
 
