@@ -42,7 +42,7 @@ Galaxy image.
 
    2.2 Using convenience scripts
    To use these scripts, you will need to have `psql` command installed locally.
-   Then, tun `pg-run.sh` to start the Postgres container with the newly created
+   Then, run `pg-run.sh` to start the Postgres container with the newly created
    network :
    ```
    ./scripts/pg-run.sh <path-to-directory>
