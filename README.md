@@ -31,45 +31,47 @@ Galaxy image.
    path on the host machine where the database files will be created (if it does
    not already exist) and the data will be persisted. If you are using a Mac to
    build the image, do not use the `/tmp` directory, as it is periodically
-   cleaned by the OS, so your data will not be persisted properly.
+   cleaned by the OS, so your data will not be persisted properly. Perform either
+   of the following options:
 
-   2.1 Running the native `docker` command
-   ```
-   docker run -d --rm -e POSTGRES_DB=galaxy -e POSTGRES_USER=galaxydbuser \
-   -e POSTGRES_PASSWORD=42 -P --network gnet --name gpsql \
-   -v </local/path/to/database>:/var/lib/postgresql/data postgres:10.6
-   ```
+   - Running the native `docker` command
+      ```
+      docker run -d --rm -e POSTGRES_DB=galaxy -e POSTGRES_USER=galaxydbuser \
+      -e POSTGRES_PASSWORD=42 -P --network gnet --name gpsql \
+      -v </local/path/to/database/db_filename>:/var/lib/postgresql/data postgres:10.6
+      ```
 
-   2.2 Using convenience scripts
-   To use these scripts, you will need to have `psql` command installed locally.
-   Then, run `pg-run.sh` to start the Postgres container with the newly created
-   network :
-   ```
-   ./scripts/pg-run.sh <path-to-directory>
-   ```
+   - Using convenience scripts
+   
+      To use these scripts, you will need to have `psql` command installed locally.
+      Then, run `pg-run.sh` to start the Postgres container with the newly created
+      network :
+      ```
+      ./scripts/pg-run.sh <path-to-directory>
+      ```
 
-   If you would like to create the Galaxy database as a dedicated step (as
-   opposed to as part of the overall build process), run `pg-galaxy-init.sh` to create
-   the galaxy database user and database, and change ownership and assign
-   appropriate privileges, providing the port number of the Postgres container.
-   ```
-   ./scripts/pg-galaxy-init.sh <port-number>
-   ```
-   To get the container port number, run `docker ps`:
-   ```
-    > docker ps
-   CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS                 PORTS                     NAMES
-   0ba2d68af1de        postgres:10.6       "docker-entrypoint.s…"   35 minutes ago      Up 35    minutes       0.0.0.0:32772->5432/tcp   gpsql
-   #In the above output, 32772 is the port number (scroll to the right).
-   ```
+      If you would like to create the Galaxy database as a dedicated step (as
+      opposed to as part of the overall build process), run `pg-galaxy-init.sh` to create
+      the galaxy database user and database, and change ownership and assign
+      appropriate privileges, providing the port number of the Postgres container.
+      ```
+      ./scripts/pg-galaxy-init.sh <port-number>
+      ```
+      To get the container port number, run `docker ps`:
+      ```
+       > docker ps
+      CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS                 PORTS                     NAMES
+      0ba2d68af1de        postgres:10.6       "docker-entrypoint.s…"   35 minutes ago      Up 35    minutes       0.0.0.0:32772->5432/tcp   gpsql
+      #In the above output, 32772 is the port number (scroll to the right).
+      ```
 
-   If you have a local copy of the database in a SQL dump format, instead of
-   building a new database, you can restore the database from a SQL script file.
-   To do that, run `pg-restore.sh`, providing the container port number as
-   argument and the SQL script file as input:
-   ```
-   ./scripts/pg-restore.sh <port-number> < <sql-dump-file>
-   ```
+      If you have a local copy of the database in a SQL dump format, instead of
+      building a new database, you can restore the database from a SQL script file.
+      To do that, run `pg-restore.sh`, providing the container port number as
+      argument and the SQL script file as input:
+      ```
+      ./scripts/pg-restore.sh <port-number> < <sql-dump-file>
+      ```
 
 3. Now we can build the Galaxy image. If the password was updated in the above
    step, correspondingly update the database connection line in `playbook.yml`.
