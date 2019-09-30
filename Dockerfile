@@ -30,6 +30,7 @@ RUN set -xe; \
         git \
         make \
         python-virtualenv \
+        python-dev \
         software-properties-common \
         gcc \
         libpython2.7 \

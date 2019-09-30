@@ -7,4 +7,4 @@ USAGE="Usage: galaxy-build.sh image-name image-tag"
 IMGNAME=${1:?"${USAGE}"}
 IMGTAG=${2:?"${USAGE}"}
 
-docker build --network gnet -t ${IMGNAME}:${IMGTAG} .
+docker build --no-cache --network gnet -t ${IMGNAME}:${IMGTAG} .

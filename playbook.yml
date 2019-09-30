@@ -4,10 +4,11 @@
 - hosts: localhost
   connection: local
   vars:
+    # galaxy_uwsgi_yaml_parser: libyaml
     galaxy_config_style: yaml
     galaxy_layout: legacy-improved
     galaxy_server_dir: /galaxy/server
-    galaxy_commit_id: release_19.05
+    galaxy_commit_id: release_19.09
     galaxy_repo: https://github.com/CloudVE/galaxy.git
     galaxy_clone_depth: 1
     galaxy_virtualenv_command: /usr/bin/python2 -m virtualenv
@@ -41,5 +42,6 @@
         py-call-osafterfork: true
       galaxy:
         database_connection: postgresql://galaxydbuser:42@gpsql/galaxy
+        conda_auto_init: false
   roles:
     - galaxy

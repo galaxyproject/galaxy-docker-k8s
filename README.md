@@ -1,17 +1,23 @@
-An Ansible playbook for building a Galaxy container for Kubernetes.
+An Ansible playbook for building a minimal Galaxy image for Kubernetes.
+
+Note that this Galaxy image is not intended to be run standalone but instead
+used as part of a container orchestration system. See [Galaxy Helm
+chart](https://github.com/galaxyproject/galaxy-helm).
 
 ## Setup the environment for building the image
-1. Clone the playbook repo
-```
-git clone https://github.com/CloudVE/galaxy-kube-playbook.git
-cd galaxy-kube-playbook
-```
+1. Clone the playbook repo.
 
-2. Make sure you have Ansible installed and then install required dependent
-Ansible roles
-```
-ansible-galaxy install -r requirements_roles.yml -p roles
-```
+    ```
+    git clone https://github.com/CloudVE/galaxy-minimal-image-playbook.git
+    cd galaxy-minimal-image-playbook
+    ```
+
+2. Make sure you have Ansible installed and then install/update required
+   dependent Ansible roles.
+
+    ```
+    ansible-galaxy install -r requirements_roles.yml -p roles --force-with-deps
+    ```
 
 ## Build a container image
 We will build the container configured to use an external PostgreSQL database
@@ -20,91 +26,65 @@ Galaxy image.
 
 1. It is necessary to link the Galaxy build container and the Postgres one. For
    this, we need to create a dedicated bridge network so the `docker build`
-   command can link to a running Postgres container:
+   command can link to a running Postgres container. This needs to be done only
+   once on a machine where you're building the image.
+
     ```
-   docker network create gnet
-   ```
+    docker network create gnet
+    ```
 
-2. In this step we will create a database that Galaxy will use. You can do so by
-   running by running a `docker run` command directly or by running a couple of
-   convenience scripts. For either option, you will need to provide a path to a
-   path on the host machine where the database files will be created (if it does
-   not already exist) and the data will be persisted. If you are using a Mac to
-   build the image, do not use the `/tmp` directory, as it is periodically
-   cleaned by the OS, so your data will not be persisted properly. Perform either
-   of the following options:
+2. Now we create a database that Galaxy will use. We need to provide a path on
+   the host machine where the database files will be persisted (e.g.,
+   `~/tmp_local/docker/volumes/pg_gxy19.09`). If you are using a Mac to build
+   the image, do not use the `/tmp` directory for this, as it is periodically
+   cleaned by the OS, so your data will not be persisted properly. Note that we
+   can reuse the same path/database multiple times. The first time we build the
+   container, the database will be initialized by applying all of Galaxy's
+   migrations and going forward it can just be reused without having to perform
+   the migrations. When the version of Galaxy being built requires a newer
+   database migration, it will be automatically applied by Galaxy's startup
+   process. Note that this will change the structure of the database on the
+   host.
 
-   - Running the native `docker` command
-      ```
-      docker run -d --rm -e POSTGRES_DB=galaxy -e POSTGRES_USER=galaxydbuser \
-      -e POSTGRES_PASSWORD=42 -P --network gnet --name gpsql \
-      -v </local/path/to/database/db_filename>:/var/lib/postgresql/data postgres:10.6
-      ```
+    ```
+    docker run --rm -e POSTGRES_DB=galaxy -e POSTGRES_USER=galaxydbuser \
+    -e POSTGRES_PASSWORD=42 --publish-all --network gnet --name gpsql \
+    -v </local/path/to/database/dir>:/var/lib/postgresql/data postgres:11.3
+    ```
 
-   - Using convenience scripts
-   
-      To use these scripts, you will need to have `psql` command installed locally.
-      Then, run `pg-run.sh` to start the Postgres container with the newly created
-      network :
-      ```
-      ./scripts/pg-run.sh <path-to-directory>
-      ```
+3. Now we can build the Galaxy image. If the database username and password
+   were changed in the above step, correspondingly update the
+   `database_connection` line in `playbook.yml`. In a separate terminal tab,
+   run the following command, changing the tag as desired.
 
-      If you would like to create the Galaxy database as a dedicated step (as
-      opposed to as part of the overall build process), run `pg-galaxy-init.sh` to create
-      the galaxy database user and database, and change ownership and assign
-      appropriate privileges, providing the port number of the Postgres container.
-      ```
-      ./scripts/pg-galaxy-init.sh <port-number>
-      ```
-      To get the container port number, run `docker ps`:
-      ```
-       > docker ps
-      CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS                 PORTS                     NAMES
-      0ba2d68af1de        postgres:10.6       "docker-entrypoint.s…"   35 minutes ago      Up 35    minutes       0.0.0.0:32772->5432/tcp   gpsql
-      #In the above output, 32772 is the port number (scroll to the right).
-      ```
-
-      If you have a local copy of the database in a SQL dump format, instead of
-      building a new database, you can restore the database from a SQL script file.
-      To do that, run `pg-restore.sh`, providing the container port number as
-      argument and the SQL script file as input:
-      ```
-      ./scripts/pg-restore.sh <port-number> < <sql-dump-file>
-      ```
-
-3. Now we can build the Galaxy image. If the password was updated in the above
-   step, correspondingly update the database connection line in `playbook.yml`.
-   Run `galaxy-build.sh` to build the Galaxy image, providing an image name and
-   an image tag:
-   ```
-   ./scripts/galaxy-build.sh <image-name> <image-tag>
-   ```
+    ```
+    docker build --no-cache --network gnet --tag galaxy/galaxy:19.09m .
+    ```
 
    You may stop the Postgres container after the Galaxy image has been built.
 
 ## Run the container
-To run the container, first ensure that the Postgres container is
-running (refer to step 2 in the previous section). Then run `galaxy-run.sh`,
-providing the image name and an image tag:
+As stated earlier, this container is not intended to be used for running Galaxy
+as is but should be used as part of a Kubernetes deployment. However, to test
+that the build was successful, it is possible to start Galaxy in limited
+capacity. To test the build, first ensure that the Postgres container is
+running (refer to step 2 in the previous section). Then run the following:
+
 ```
-./scripts/galaxy-run.sh <image-name> <image-tag>
+docker run -it --rm --network gnet -p 8080:8080 galaxy/galaxy:19.09m bash
 ```
 
-Optionally, you may run `galaxy-run-root.sh`, which gives you root access to the
-container (should you need it).
+Before we can start the Galaxy process, we need to update `config/galaxy.yml`
+file to remove `data_manager_config_file` and `shed_tool_data_table_config`
+entries as those files do not exist on the minimal image yet the
+`galaxy-ansible` role adds them into the default config. Then run
 
-Then exec into the galaxy container:
 ```
-> docker exec -it <galaxy-container-id> bash
-```
-and start the galaxy process (source the virtual env, then call `uwsgi`):
-```
-> . .venv/bin/activate
-> uwsgi --yaml config/galaxy.yml
+uwsgi --yaml config/galaxy.yml
 ```
 
 Galaxy will be available on the host under `http://localhost:8080/`.
+
 
 ***The following sections need revision:***
 
