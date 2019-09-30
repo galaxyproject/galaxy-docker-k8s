@@ -61,6 +61,20 @@ Galaxy image.
     docker build --no-cache --network gnet --tag galaxy/galaxy:19.09m .
     ```
 
+4. (optional) To create a dump of the database, run the following set of
+   commands. Once we have a dump, we can update the Helm chart with its
+   content.
+
+    ```
+    1. Exec into the Postgres container
+    2. Run the following within the container:
+        pg_dump -U galaxydbuser -d galaxy > /var/lib/postgresql/data/dump.sql
+    3. On the host, the dump will be in located in the folder that was mounted
+       into the Postgres container (eg, ~/tmp_local/docker/volumes/pg_gxy19.09)
+    4. Place the contents of the dump into the Helm chart restore script, after
+       EOSQL, https://github.com/galaxyproject/galaxy-helm/blob/master/galaxy/files/conf.d/init2_restore.sh.
+    ```
+
    You may stop the Postgres container after the Galaxy image has been built.
 
 ## Run the container
@@ -133,7 +147,7 @@ suitably adjusting the server name as defined in the job conf:
 ## Speed-up image build-time
 
 To improve development, image build time can be significantly reduced by using
-`Dockerfile.0` together with `Dockerfile'.
+`Dockerfile.0` together with `Dockerfile`.
 
 During development, any change to `playbook.yml` (or the variables and/or files
 it utilizes) results in a Docker cache miss, and the entire playbook is re-run.
