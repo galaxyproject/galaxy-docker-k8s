@@ -16,7 +16,7 @@ chart](https://github.com/galaxyproject/galaxy-helm).
    dependent Ansible roles.
 
     ```
-    ansible-galaxy install -r requirements_roles.yml -p roles --force-with-deps
+    ansible-galaxy install -r requirements_roles.yml -p roles --force
     ```
 
 ## Build a container image
@@ -47,7 +47,7 @@ Galaxy image.
    host.
 
     ```
-    docker run --rm -e POSTGRES_DB=galaxy -e POSTGRES_USER=galaxydbuser \
+    docker run --rm -d -e POSTGRES_DB=galaxy -e POSTGRES_USER=galaxydbuser \
     -e POSTGRES_PASSWORD=42 --publish-all --network gnet --name gpsql \
     -v </local/path/to/database/dir>:/var/lib/postgresql/data postgres:11.3
     ```
