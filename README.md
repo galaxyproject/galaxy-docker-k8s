@@ -19,7 +19,15 @@ chart](https://github.com/galaxyproject/galaxy-helm).
     ansible-galaxy install -r requirements_roles.yml -p roles --force-with-deps
     ```
 
-## Build a container image
+## Build a container image for Helm Chart (simple)
+
+The next section contains instructions for a full container image that is testable when deployed alongside a Postgres container and may be useful for producing compatible database dumps if needed. However, the Helm chart is fully functional when run from an image built with a simple standalone ``docker build``. To build this container, run the following command, changing the tag as desired.
+
+```
+docker build --no-cache --tag galaxy/galaxy:19.09m .
+```
+
+## Build a container image (full with datbase)
 We will build the container configured to use an external PostgreSQL database
 so we need to run a Postgres container in parallel to the one building the
 Galaxy image.
@@ -54,7 +62,7 @@ Galaxy image.
 
 3. Now we can build the Galaxy image. If the database username and password
    were changed in the above step, correspondingly update the
-   `database_connection` line in `playbook.yml`. In a separate terminal tab,
+   `database_connection` line in `playbook.yml`. Also update `playbook.yml` to set `galaxy_manage_database` to `true`. In a separate terminal tab,
    run the following command, changing the tag as desired.
 
     ```

@@ -13,6 +13,7 @@
     galaxy_clone_depth: 1
     galaxy_virtualenv_command: /usr/bin/python2 -m virtualenv
     pip_extra_args: "--no-cache-dir --compile"
+    galaxy_manage_database: false
     galaxy_client_make_target: client-production
     galaxy_config_files:
       - src: files/job_conf.xml
