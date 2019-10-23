@@ -1,15 +1,15 @@
-An Ansible playbook for building a minimal Galaxy image for Kubernetes.
+An Ansible playbook for building a Galaxy Docker image for Kubernetes.
 
 Note that this Galaxy image is not intended to be run standalone but instead
-used as part of a container orchestration system. See [Galaxy Helm
-chart](https://github.com/galaxyproject/galaxy-helm).
+used as part of a container orchestration system, namely Kubernetes. See
+[Galaxy Helm chart](https://github.com/galaxyproject/galaxy-helm).
 
 ## Setup the environment for building the image
 1. Clone the playbook repo.
 
     ```
-    git clone https://github.com/CloudVE/galaxy-minimal-image-playbook.git
-    cd galaxy-minimal-image-playbook
+    git clone https://github.com/CloudVE/galaxy-docker-k8s.git
+    cd galaxy-docker-k8s
     ```
 
 2. Make sure you have Ansible installed and then install/update required
@@ -19,15 +19,20 @@ chart](https://github.com/galaxyproject/galaxy-helm).
     ansible-galaxy install -r requirements_roles.yml -p roles --force-with-deps
     ```
 
-## Build a container image for Helm Chart (simple)
+## Build a container image (simple)
 
-The next section contains instructions for a full container image that is testable when deployed alongside a Postgres container and may be useful for producing compatible database dumps if needed. However, the Helm chart is fully functional when run from an image built with a simple standalone ``docker build``. To build this container, run the following command, changing the tag as desired.
+The next section contains instructions for a full container image that is
+testable when deployed alongside a Postgres container and may be useful for
+producing compatible database dumps if needed. However, the Helm chart is fully
+functional when run from an image built with a simple standalone ``docker
+build``. To build this container, run the following command, changing the tag
+as desired.
 
 ```
-docker build --no-cache --tag galaxy/galaxy:19.09m .
+docker build --no-cache --tag galaxy/galaxy:19.09-k8s .
 ```
 
-## Build a container image (full with datbase)
+## Build a container image (full with Postgres database)
 We will build the container configured to use an external PostgreSQL database
 so we need to run a Postgres container in parallel to the one building the
 Galaxy image.
@@ -60,13 +65,14 @@ Galaxy image.
     -v </local/path/to/database/dir>:/var/lib/postgresql/data postgres:11.3
     ```
 
-3. Now we can build the Galaxy image. If the database username and password
+3. Now we can build the Galaxy image. First update `playbook.yml` to set
+   `galaxy_manage_database` to `true`. If the database username and password
    were changed in the above step, correspondingly update the
-   `database_connection` line in `playbook.yml`. Also update `playbook.yml` to set `galaxy_manage_database` to `true`. In a separate terminal tab,
-   run the following command, changing the tag as desired.
+   `database_connection` line. In a separate terminal tab, run the following
+   command, changing the tag as desired.
 
     ```
-    docker build --no-cache --network gnet --tag galaxy/galaxy:19.09m .
+    docker build --no-cache --network gnet --tag galaxy/galaxy:19.09-k8s .
     ```
 
 4. (optional) To create a dump of the database, run the following set of
@@ -89,11 +95,14 @@ Galaxy image.
 As stated earlier, this container is not intended to be used for running Galaxy
 as is but should be used as part of a Kubernetes deployment. However, to test
 that the build was successful, it is possible to start Galaxy in limited
-capacity. To test the build, first ensure that the Postgres container is
+capacity. If you are running Docker for Desktop, you will need to add Nginx
+ingress to your Kubernetes: https://kubernetes.github.io/ingress-nginx/deploy/
+
+To test the build, first ensure that the Postgres container is
 running (refer to step 2 in the previous section). Then run the following:
 
 ```
-docker run -it --rm --network gnet -p 8080:8080 galaxy/galaxy:19.09m bash
+docker run -it --rm --network gnet -p 8080:8080 galaxy/galaxy:19.09-k8s bash
 ```
 
 Before we can start the Galaxy process, we need to update `config/galaxy.yml`
