@@ -1,8 +1,9 @@
 An Ansible playbook for building a Galaxy Docker image for Kubernetes.
 
-Note that this Galaxy image is not intended to be run standalone but instead
-used as part of a container orchestration system, namely Kubernetes. See
-[Galaxy Helm chart](https://github.com/galaxyproject/galaxy-helm).
+Note that this Galaxy Docker image is not intended to be run standalone but
+instead used as part of a container orchestration system, namely Kubernetes.
+See [Galaxy Helm chart](https://github.com/galaxyproject/galaxy-helm) for how
+to go about doing this.
 
 ## Setup the environment for building the image
 1. Clone the playbook repo.
@@ -29,7 +30,7 @@ build``. To build this container, run the following command, changing the tag
 as desired.
 
 ```
-docker build --no-cache --tag galaxy/galaxy:19.09-k8s .
+docker build --no-cache --tag galaxy/galaxy-k8s:19.09 .
 ```
 
 ## Build a container image (full with Postgres database)
@@ -72,7 +73,7 @@ Galaxy image.
    command, changing the tag as desired.
 
     ```
-    docker build --no-cache --network gnet --tag galaxy/galaxy:19.09-k8s .
+    docker build --no-cache --network gnet --tag galaxy/galaxy-k8s:19.09 .
     ```
 
 4. (optional) To create a dump of the database, run the following set of
@@ -102,7 +103,7 @@ To test the build, first ensure that the Postgres container is
 running (refer to step 2 in the previous section). Then run the following:
 
 ```
-docker run -it --rm --network gnet -p 8080:8080 galaxy/galaxy:19.09-k8s bash
+docker run -it --rm --network gnet -p 8080:8080 galaxy/galaxy-k8s:19.09 bash
 ```
 
 Before we can start the Galaxy process, we need to update `config/galaxy.yml`
