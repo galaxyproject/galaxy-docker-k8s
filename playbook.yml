@@ -4,7 +4,7 @@
 - hosts: localhost
   connection: local
   vars:
-    # galaxy_uwsgi_yaml_parser: libyaml
+    galaxy_uwsgi_yaml_parser: libyaml
     galaxy_config_style: yaml
     galaxy_layout: legacy-improved
     galaxy_server_dir: /galaxy/server
