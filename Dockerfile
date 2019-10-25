@@ -34,6 +34,7 @@ RUN set -xe; \
         software-properties-common \
         gcc \
         libpython3.6 \
+        locales locales-all \
     && apt-add-repository -y ppa:ansible/ansible \
     && apt-get -qq update && apt-get install -y --no-install-recommends \
         ansible \
@@ -44,6 +45,7 @@ RUN set -xe; \
 WORKDIR /tmp/ansible
 RUN rm -rf *
 COPY . .
+ENV LC_ALL en_US.UTF-8
 RUN ansible-playbook -i localhost, playbook.yml -vv
 
 # Remove build artifacts + files not needed in container
