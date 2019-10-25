@@ -29,11 +29,11 @@ RUN set -xe; \
         apt-transport-https \
         git \
         make \
-        python-virtualenv \
-        python-dev \
+        python3-virtualenv \
+        python3-dev \
         software-properties-common \
         gcc \
-        libpython2.7 \
+        libpython3.6 \
     && apt-add-repository -y ppa:ansible/ansible \
     && apt-get -qq update && apt-get install -y --no-install-recommends \
         ansible \
@@ -70,9 +70,9 @@ ARG GALAXY_USER
 # Install python-virtualenv
 RUN set -xe; \
     apt-get -qq update && apt-get install -y --no-install-recommends \
-        python-virtualenv \
+        python3-virtualenv \
         vim \
-        libpython2.7 \
+        libpython3.6 \
         curl \
     && apt-get autoremove -y && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/*
@@ -95,4 +95,4 @@ USER $GALAXY_USER
 ENV PATH="$SERVER_DIR/.venv/bin:${PATH}"
 
 # [optional] to run:
-#CMD uwsgi --yaml config/galaxy.yml
+CMD uwsgi --yaml config/galaxy.yml
