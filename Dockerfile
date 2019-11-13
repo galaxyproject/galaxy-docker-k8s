@@ -49,9 +49,11 @@ RUN ansible-playbook -i localhost, playbook.yml -vv \
     # TODO: Remove the following based on merge of: https://github.com/galaxyproject/ansible-galaxy/pull/90
     # Override galaxy's uwsgi with libyaml based uwsgi
     && . /galaxy/server/.venv/bin/activate \
+    && UWSGI_VERSION=`uwsgi --version` \
+    && pip uninstall -y pyuwsgi \
     # Install same version of uwsgi as in galaxy requirements, but with libyaml
     && UWSGI_PROFILE=/tmp/ansible/files/libyaml.ini pip install --upgrade \
-       uwsgi==`uwsgi --version` --no-cache-dir
+       uwsgi==$UWSGI_VERSION --no-cache-dir
 
 # Remove build artifacts + files not needed in container
 WORKDIR $SERVER_DIR
