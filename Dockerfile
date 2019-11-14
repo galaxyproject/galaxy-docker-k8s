@@ -34,7 +34,6 @@ RUN set -xe; \
         software-properties-common \
         gcc \
         libpython2.7 \
-        libyaml-dev \
     && apt-add-repository -y ppa:ansible/ansible \
     && apt-get -qq update && apt-get install -y --no-install-recommends \
         ansible \
@@ -45,15 +44,7 @@ RUN set -xe; \
 WORKDIR /tmp/ansible
 RUN rm -rf *
 COPY . .
-RUN ansible-playbook -i localhost, playbook.yml -vv \
-    # TODO: Remove the following based on merge of: https://github.com/galaxyproject/ansible-galaxy/pull/90
-    # Override galaxy's uwsgi with libyaml based uwsgi
-    && . /galaxy/server/.venv/bin/activate \
-    && UWSGI_VERSION=`uwsgi --version` \
-    && pip uninstall -y pyuwsgi \
-    # Install same version of uwsgi as in galaxy requirements, but with libyaml
-    && UWSGI_PROFILE=/tmp/ansible/files/libyaml.ini pip install --upgrade \
-       uwsgi==$UWSGI_VERSION --no-cache-dir
+RUN ansible-playbook -i localhost, playbook.yml -vv
 
 # Remove build artifacts + files not needed in container
 WORKDIR $SERVER_DIR
@@ -83,7 +74,6 @@ RUN set -xe; \
         vim \
         libpython2.7 \
         curl \
-        libyaml-0-2 \
     && apt-get autoremove -y && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/*
 
