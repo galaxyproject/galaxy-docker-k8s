@@ -30,7 +30,7 @@ build``. To build this container, run the following command, changing the tag
 as desired.
 
 ```
-docker build --no-cache --tag galaxy/galaxy-k8s:19.09 .
+docker build --no-cache --tag galaxy/galaxy-k8s:20.01 .
 ```
 
 ## Build a container image (full with Postgres database)
@@ -49,21 +49,20 @@ Galaxy image.
 
 2. Now we create a database that Galaxy will use. We need to provide a path on
    the host machine where the database files will be persisted (e.g.,
-   `~/tmp_local/docker/volumes/pg_gxy19.09`). If you are using a Mac to build
+   `~/tmp_local/docker/volumes/pg_gxy20.01`). If you are using a Mac to build
    the image, do not use the `/tmp` directory for this, as it is periodically
    cleaned by the OS, so your data will not be persisted properly. Note that we
    can reuse the same path/database multiple times. The first time we build the
-   container, the database will be initialized by applying all of Galaxy's
-   migrations and going forward it can just be reused without having to perform
-   the migrations. When the version of Galaxy being built requires a newer
-   database migration, it will be automatically applied by Galaxy's startup
-   process. Note that this will change the structure of the database on the
-   host.
+   container, the database will be initialized by applying the latest Galaxy
+   migration. Going forward, necessary migrations will be applied
+   automatically. Note that this will change the structure of the database on
+   the host. Finally, the version of the Postgres container should match the
+   version of Postgres used by the Postgres chart specified in the requirements.
 
     ```
     docker run --rm -e POSTGRES_DB=galaxy -e POSTGRES_USER=galaxydbuser \
     -e POSTGRES_PASSWORD=42 --publish-all --network gnet --name gpsql \
-    -v </local/path/to/database/dir>:/var/lib/postgresql/data postgres:11.3
+    -v </local/path/to/database/dir>:/var/lib/postgresql/data postgres:11.6
     ```
 
 3. Now we can build the Galaxy image. First update `playbook.yml` to set
@@ -73,21 +72,7 @@ Galaxy image.
    command, changing the tag as desired.
 
     ```
-    docker build --no-cache --network gnet --tag galaxy/galaxy-k8s:19.09 .
-    ```
-
-4. (optional) To create a dump of the database, run the following set of
-   commands. Once we have a dump, we can update the Helm chart with its
-   content.
-
-    ```
-    1. Exec into the Postgres container
-    2. Run the following within the container:
-        pg_dump -U galaxydbuser -d galaxy > /var/lib/postgresql/data/dump.sql
-    3. On the host, the dump will be in located in the folder that was mounted
-       into the Postgres container (eg, ~/tmp_local/docker/volumes/pg_gxy19.09)
-    4. Place the contents of the dump into the Helm chart restore script, after
-       EOSQL, https://github.com/galaxyproject/galaxy-helm/blob/master/galaxy/files/conf.d/init2_restore.sh.
+    docker build --no-cache --network gnet --tag galaxy/galaxy-k8s:20.01 .
     ```
 
    You may stop the Postgres container after the Galaxy image has been built.
@@ -103,16 +88,42 @@ To test the build, first ensure that the Postgres container is
 running (refer to step 2 in the previous section). Then run the following:
 
 ```
-docker run -it --rm --network gnet -p 8080:8080 galaxy/galaxy-k8s:19.09 bash
+docker run -it --rm --network gnet -p 8080:8080 galaxy/galaxy-k8s:20.01 bash
 ```
 
 Before we can start the Galaxy process, we need to update `config/galaxy.yml`
 file to remove `data_manager_config_file` and `shed_tool_data_table_config`
 entries as those files do not exist on the minimal image yet the
-`galaxy-ansible` role adds them into the default config. Then run
+`galaxy-ansible` role adds them into the default config. Also, create
+`config/uwsgi.yaml` with the following content:
+
+    ```
+    uwsgi:
+        virtualenv: /galaxy/server/.venv
+        processes: 1
+        http: 0.0.0.0:8080
+        pythonpath: /galaxy/server/lib
+        thunder-lock: true
+        manage-script-name: true
+        buffer-size: 16384
+        offload-threads: 2
+        threads: 4
+        die-on-term: true
+        master: true
+        hook-master-start: unix_signal:2 gracefully_kill_them_all
+        enable-threads: true
+        py-call-osafterfork: true
+        static-map: /static/style=/galaxy/server/static/style/blue
+        static-map: /static=/galaxy/server/static
+        static-map: /favicon.ico=/galaxy/server/static/favicon.ico
+        static-safe: /galaxy/server/client/galaxy/images
+        mount: /=galaxy.webapps.galaxy.buildapp:uwsgi_app()
+    ```
+
+Then start Galaxy with
 
 ```
-uwsgi --yaml config/galaxy.yml
+uwsgi --yaml config/uwsgi.yaml --set galaxy_config_file=config/galaxy.yml
 ```
 
 Galaxy will be available on the host under `http://localhost:8080/`.

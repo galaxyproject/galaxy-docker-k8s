@@ -32,6 +32,7 @@ RUN set -xe; \
         python-virtualenv \
         python-dev \
         software-properties-common \
+        ssh \
         gcc \
         libpython2.7 \
     && apt-add-repository -y ppa:ansible/ansible \
