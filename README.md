@@ -91,13 +91,9 @@ running (refer to step 2 in the previous section). Then run the following:
 docker run -it --rm --network gnet -p 8080:8080 galaxy/galaxy-k8s:20.01 bash
 ```
 
-Before we can start the Galaxy process, we need to update `config/galaxy.yml`
-file to remove `data_manager_config_file` and `shed_tool_data_table_config`
-entries as those files do not exist on the minimal image yet the
-`galaxy-ansible` role adds them into the default config. Also, create
+Before we can start the Galaxy process, we need to create
 `config/uwsgi.yaml` with the following content:
 
-    ```
     uwsgi:
         virtualenv: /galaxy/server/.venv
         processes: 1
@@ -118,7 +114,6 @@ entries as those files do not exist on the minimal image yet the
         static-map: /favicon.ico=/galaxy/server/static/favicon.ico
         static-safe: /galaxy/server/client/galaxy/images
         mount: /=galaxy.webapps.galaxy.buildapp:uwsgi_app()
-    ```
 
 Then start Galaxy with
 
