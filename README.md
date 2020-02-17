@@ -9,7 +9,7 @@ to go about doing this.
 1. Clone the playbook repo.
 
     ```
-    git clone https://github.com/CloudVE/galaxy-docker-k8s.git
+    git clone https://github.com/galaxyproject/galaxy-docker-k8s.git
     cd galaxy-docker-k8s
     ```
 
@@ -123,6 +123,7 @@ uwsgi --yaml config/uwsgi.yaml --set galaxy_config_file=config/galaxy.yml
 
 Galaxy will be available on the host under `http://localhost:8080/`.
 
+---
 
 ***The following sections need revision:***
 
