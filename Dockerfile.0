@@ -10,10 +10,10 @@ RUN set -xe; \
         apt-transport-https \
         git \
         make \
-        python-virtualenv \
+        python3-virtualenv \
         software-properties-common \
         gcc \
-        libpython2.7 \
+        libpython3.6 \
     && apt-add-repository -y ppa:ansible/ansible \
     && apt-get -qq update && apt-get install -y --no-install-recommends \
         ansible \
