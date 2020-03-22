@@ -51,6 +51,8 @@ RUN ansible-playbook -i localhost, playbook.yml -vv
 
 # Remove build artifacts + files not needed in container
 WORKDIR $SERVER_DIR
+# Save commit hash of HEAD before zapping git folder
+RUN git rev-parse HEAD > GITREVISION
 RUN rm -rf \
         .ci \
         .git \
