@@ -14,12 +14,13 @@ ARG ROOT_DIR=/galaxy
 ARG SERVER_DIR=$ROOT_DIR/server
 # For much faster build time override this with image0 (Dockerfile.0 build):
 #   docker build --build-arg BASE=<image0 name>...
-ARG BASE=ubuntu:20.04
+ARG STAGE1_BASE=ubuntu:20.04
+ARG STAGE2_BASE=$STAGE1_BASE
 # NOTE: the value of GALAXY_USER must be also hardcoded in COPY in final stage
 ARG GALAXY_USER=galaxy
 
 # Stage-1
-FROM $BASE AS stage1
+FROM $STAGE1_BASE AS stage1
 ARG DEBIAN_FRONTEND=noninteractive
 ARG SERVER_DIR
 
@@ -67,7 +68,7 @@ RUN rm -rf \
         test-data
 
 # Stage-2
-FROM ubuntu:20.04
+FROM $STAGE2_BASE
 ARG DEBIAN_FRONTEND=noninteractive
 ARG ROOT_DIR
 ARG SERVER_DIR
