@@ -48,7 +48,7 @@ COPY . .
 ENV LC_ALL en_US.UTF-8
 RUN ansible-playbook -i localhost, playbook.yml -vv
 
-RUN /galaxy/server/.venv/bin/pip install psycopg2-binary==2.8.4
+RUN cat /galaxy/server/lib/galaxy/dependencies/conditional-requirements.txt | grep psycopg2-binary | xargs /galaxy/server/.venv/bin/pip install
 
 # Remove build artifacts + files not needed in container
 WORKDIR $SERVER_DIR
