@@ -11,10 +11,12 @@ RUN set -xe; \
         git \
         make \
         python3-virtualenv \
+        python3-dev \
         software-properties-common \
+        ssh \
         gcc \
         libpython3.6 \
-    && apt-add-repository -y ppa:ansible/ansible \
+        locales locales-all \
     && apt-get -qq update && apt-get install -y --no-install-recommends \
         ansible \
     && apt-get autoremove -y && apt-get clean \
