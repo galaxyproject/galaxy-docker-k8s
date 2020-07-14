@@ -4,13 +4,11 @@
 - hosts: localhost
   connection: local
   vars:
-    galaxy_uwsgi_yaml_parser: libyaml
     galaxy_config_style: yaml
     galaxy_layout: legacy-improved
     galaxy_server_dir: /galaxy/server
     galaxy_commit_id: release_20.01
     galaxy_repo: https://github.com/galaxyproject/galaxy.git
-    # galaxy_repo: https://github.com/CloudVE/galaxy.git
     galaxy_clone_depth: 1
     galaxy_virtualenv_command: /usr/bin/python3 -m virtualenv
     galaxy_virtualenv_python: python3
@@ -26,11 +24,14 @@
       uwsgi:
         virtualenv: "{{ galaxy_server_dir }}/.venv"
         pythonpath: "{{ galaxy_server_dir }}/lib"
-        module: galaxy.webapps.galaxy.buildapp:uwsgi_app()
+        mount: /=galaxy.webapps.galaxy.buildapp:uwsgi_app()
         http: 0.0.0.0:8080
+        manage-script-name: true
         static-map:
           - /static/style={{ galaxy_server_dir }}/static/style/blue
           - /static={{ galaxy_server_dir }}/static
+          - /favicon.ico=/galaxy/server/static/favicon.ico
+        static-safe: /galaxy/server/client/galaxy/images
         thunder-lock: true
         buffer-size: 16384
         offload-threads: 2
@@ -38,13 +39,10 @@
         threads: 4
         die-on-term: true
         master: true
-        hook-master-start:
-          - unix_signal:2 gracefully_kill_them_all
-          - unix_signal:15 gracefully_kill_them_all
+        hook-master-start: unix_signal:2 gracefully_kill_them_all
         enable-threads: true
         py-call-osafterfork: true
       galaxy:
-        database_connection: postgresql://galaxydbuser:42@gpsql/galaxy
         conda_auto_init: false
   roles:
     - galaxy

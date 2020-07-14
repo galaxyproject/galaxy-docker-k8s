@@ -49,6 +49,8 @@ COPY . .
 ENV LC_ALL en_US.UTF-8
 RUN ansible-playbook -i localhost, playbook.yml -vv
 
+RUN /galaxy/server/.venv/bin/pip install psycopg2-binary==2.8.4
+
 # Remove build artifacts + files not needed in container
 WORKDIR $SERVER_DIR
 # Save commit hash of HEAD before zapping git folder
