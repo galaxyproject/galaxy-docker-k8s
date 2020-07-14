@@ -14,7 +14,7 @@ ARG ROOT_DIR=/galaxy
 ARG SERVER_DIR=$ROOT_DIR/server
 # For much faster build time override this with image0 (Dockerfile.0 build):
 #   docker build --build-arg BASE=<image0 name>...
-ARG BASE=ubuntu:18.04
+ARG BASE=ubuntu:20.04
 # NOTE: the value of GALAXY_USER must be also hardcoded in COPY in final stage
 ARG GALAXY_USER=galaxy
 
@@ -36,7 +36,6 @@ RUN set -xe; \
         gcc \
         libpython3.6 \
         locales locales-all \
-    && apt-add-repository -y ppa:ansible/ansible \
     && apt-get -qq update && apt-get install -y --no-install-recommends \
         ansible \
     && apt-get autoremove -y && apt-get clean \
@@ -68,7 +67,7 @@ RUN rm -rf \
         test-data
 
 # Stage-2
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 ARG DEBIAN_FRONTEND=noninteractive
 ARG ROOT_DIR
 ARG SERVER_DIR
