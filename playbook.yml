@@ -7,17 +7,12 @@
     galaxy_config_style: yaml
     galaxy_layout: legacy-improved
     galaxy_server_dir: /galaxy/server
-    galaxy_commit_id: release_20.09
-    galaxy_repo: https://github.com/galaxyproject/galaxy.git
-    galaxy_clone_depth: 1
     galaxy_virtualenv_command: /usr/bin/python3 -m virtualenv
     galaxy_virtualenv_python: python3
     pip_extra_args: "--no-cache-dir --compile"
     galaxy_manage_database: false
     galaxy_client_make_target: client-production
     galaxy_config_files:
-      - src: files/job_conf.xml
-        dest: "{{ galaxy_server_dir }}/config/job_conf.xml"
       - src: files/welcome.html
         dest: "{{ galaxy_server_dir }}/static/welcome.html"
     galaxy_config:
