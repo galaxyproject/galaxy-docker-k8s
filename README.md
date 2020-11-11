@@ -10,41 +10,41 @@ fully-fledged, single container installation of Galaxy.
 
 ## Building a Galaxy docker image
 
-    ```
-    git clone https://github.com/galaxyproject/galaxy.git
-    docker build . --tag galaxy/galaxy:latest
-    docker run -it --rm -p 8080:8080 galaxy/galaxy:latest
-    ```
+```
+git clone https://github.com/galaxyproject/galaxy.git
+docker build . --tag galaxy/galaxy:latest
+docker run -it --rm -p 8080:8080 galaxy/galaxy:latest
+```
 
 ## Extending the image
 
 ### Method 1
 
-    Build the image with a customized playbook. Your customized playbook can
-    override all settings as required.
+Build the image with a customized playbook. Your customized playbook can
+override all settings as required.
 
-    ```
-    git clone https://github.com/galaxyproject/galaxy.git
-    docker build --build-arg GALAXY_PLAYBOOK_REPO=https://github.com/myrepo/galaxy-custom . -t galaxy/galaxy:custom
-    ```
+```
+git clone https://github.com/galaxyproject/galaxy.git
+docker build --build-arg GALAXY_PLAYBOOK_REPO=https://github.com/myrepo/galaxy-custom . -t galaxy/galaxy:custom
+```
 
 ### Method 2
 
-    Extend the mimimal image and add your customizations on top.
+Extend the mimimal image and add your customizations on top.
 
-    ```
-    FROM galaxy/galaxy:latest
+```
+FROM galaxy/galaxy:latest
 
-    # switch to root
-    USER root
+# switch to root
+USER root
 
-    RUN apt-get -qq update && apt-get install -y --no-install-recommends gridengine-drmaa1.0
+RUN apt-get -qq update && apt-get install -y --no-install-recommends gridengine-drmaa1.0
 
-    # switch back to galaxy
-    USER galaxy
+# switch back to galaxy
+USER galaxy
 
-    RUN /galaxy/server/.venv/bin/pip install drmaa
-    ```
+RUN /galaxy/server/.venv/bin/pip install drmaa
+```
 
 ## Build and run a container image (full with Postgres database)
 The default build above uses an sqlite database, although the image has the
