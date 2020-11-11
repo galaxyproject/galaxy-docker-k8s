@@ -1,34 +1,50 @@
-An Ansible playbook for building a Galaxy Docker image for Kubernetes.
+An Ansible playbook used when creating a minimal docker image for Galaxy.
 
-The main purpose of this Docker image is to support Kubernetes, although the
-image can be run standalone - by default with an sqlite database.
-See [Galaxy Helm chart](https://github.com/galaxyproject/galaxy-helm) for how
-to set up on Kubernetes.
+This playbook uses the [ansible-galaxy](https://github.com/galaxyproject/ansible-galaxy)
+role, and defines settings suitable for running a minimal build of Galaxy, by default
+using a local sqlite database. This minimalist image is also used in the Kubernetes
+distribution of Galaxy. See [Galaxy Helm chart](https://github.com/galaxyproject/galaxy-helm)
+for how to set up on Kubernetes.
+See [Docker Galaxy Stable](https://github.com/bgruening/docker-galaxy-stable) for a
+fully-fledged, single container installation of Galaxy.
 
-## Setup the environment for building the image
-1. Clone the playbook repo.
-
-    ```
-    git clone https://github.com/galaxyproject/galaxy-docker-k8s.git
-    cd galaxy-docker-k8s
-    ```
-
-2. Make sure you have Ansible installed and then install/update required
-   dependent Ansible roles.
+## Building a Galaxy docker image
 
     ```
-    ansible-galaxy install -r requirements_roles.yml -p roles --force-with-deps
+    git clone https://github.com/galaxyproject/galaxy.git
+    docker build . --tag galaxy/galaxy:latest
+    docker run -it --rm -p 8080:8080 galaxy/galaxy:latest
     ```
 
-## Build and run container image (simple)
+## Extending the image
 
-To build this container, run the following command, changing the tag
-as desired. You will then be able to access Galaxy on port 8080.
+### Method 1
 
-```
-docker build --no-cache --tag galaxy/galaxy-k8s:latest .
-docker run -it --rm -p 8080:8080 galaxy/galaxy-k8s:latest
-```
+    Build the image with a customized playbook. Your customized playbook can
+    override all settings as required.
+
+    ```
+    git clone https://github.com/galaxyproject/galaxy.git
+    docker build --build-arg GALAXY_PLAYBOOK_REPO=https://github.com/myrepo/galaxy-custom . -t galaxy/galaxy:custom
+    ```
+
+### Method 2
+
+    Extend the mimimal image and add your customizations on top.
+
+    ```
+    FROM galaxy/galaxy:latest
+
+    # switch to root
+    USER root
+
+    RUN apt-get -qq update && apt-get install -y --no-install-recommends gridengine-drmaa1.0
+
+    # switch back to galaxy
+    USER galaxy
+
+    RUN /galaxy/server/.venv/bin/pip install drmaa
+    ```
 
 ## Build and run a container image (full with Postgres database)
 The default build above uses an sqlite database, although the image has the
@@ -85,114 +101,3 @@ database, we need to run a Postgres container in parallel.
    Galaxy will now be accessible on port 8080.
 
 ---
-
-***The following sections need revision:***
-
-Alternatively, to start web handlers and job handlers as separate containers,
-we need to do the following.
-Start the job handler container using the following command:
-```
-docker run -it --rm --network gnet -p 8080:8080 galaxy bash
-```
-
-Then, exec into the created container and create the
-`/galaxy/server/config/job_conf.xml` file with the following content:
-
-```
-<job_conf>
-    <plugins>
-        <plugin id="local" type="runner" load="galaxy.jobs.runners.local:LocalJobRunner" workers="4"/>
-    </plugins>
-    <handlers default="handlers">
-        <handler id="handler1" tags="handlers" />
-        <handler id="handler2" tags="handlers" />
-    </handlers>
-    <destinations>
-        <destination id="local" runner="local"/>
-    </destinations>
-</job_conf>
-```
-
-Start the Galaxy process as normal by running `sh run.sh`.
-
-Next, create an additional 2 containers as job handlers with the following
-command:
-
-```
-docker run -it --rm --network gnet galaxy bash
-```
-
-For each container, create an equivalent `job_conf.xml` file as in the web
-handler container. Finally, star the web handlers with the following command,
-suitably adjusting the server name as defined in the job conf:
-
-```
-/galaxy/server/scripts/galaxy-main -c config/galaxy.yml --server-name handler1
-```
-
-## Speed-up image build-time
-
-To improve development, image build time can be significantly reduced by using
-`Dockerfile.0` together with `Dockerfile`.
-
-During development, any change to `playbook.yml` (or the variables and/or files
-it utilizes) results in a Docker cache miss, and the entire playbook is re-run.
-However, a few particularly lengthy tasks do not result in any changes to the
-final image.
-
-Solution. Use `Dockerfile.0` to pre-build an intermediate-stage image that
-contains the Galaxy files installed by running the playbook:
-
-`docker build -f Dockerfile.0 --network gnet -t galaxy:image0 .`
-
-Then, use `Dockerfile` to build the final image. To use the intermediate-stage
-image0:
-
-`docker build --network gnet --build-arg BASE=galaxy:image0 -t galaxy:final .`
-
-This will use the prebuilt image0 as the base for the build stage that runs the
-playbook. The playbook will not re-clone the Git repository, reinstall
-dependencies, and rebuild the client. This will result in a **much reduced**
-build time for subsequent builds.
-
-Following is a brief description of the build stages in `Dockerfile.0` and
-`Dockerfile`.
-
-Dockerfile.0: build base w/prebuilt galaxy (image0)
-- FROM ubuntu
-    - install build tools and Ansible
-    - run playbook
-
-Dockerfile: build final image (image1)
-- Stage 1:
-    - FROM: ubuntu OR image0 (prebuilt by Dockerfile.0)
-    - install build tools and Ansible
-    - run playbook
-    - remove build artifacts + files not needed in container
-- Stage 2:
-    - FROM ubuntu
-    - install python-virtualenv
-    - create galaxy user+group
-    - mkdir+chown galaxy directory
-    - copy galaxy files from stage 1
-    - finalize container (workdir, expose, user, path)
-
-## Backup database to a SQL script file
-
-1. Make sure your Postgres container is running (refer to step 2 of building a
-   container image).
-
-2. Exec into the Postgres container:
-```
-./scripts/pg-exec
-```
-
-3. Inside the container:
-```
-> cd /var/lib/postgresql/data
-> pg_dump -U postgres -d galaxy > galaxy_dump.sql
-```
-The file is now located at `<path-to-bind-mount>/data`
-
-For more information, refer to
-[PostgreSQL documentation](https://www.postgresql.org/docs/10/app-pgdump.html).
