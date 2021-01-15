@@ -11,8 +11,8 @@
     galaxy_virtualenv_python: python3
     pip_extra_args: "--no-cache-dir --compile"
     galaxy_manage_database: false
-    galaxy_manage_clone: true
-    galaxy_manage_existing: false
+    galaxy_manage_clone: false
+    galaxy_manage_existing: true
     galaxy_client_make_target: client-production
     galaxy_config_files:
       - src: files/job_conf.xml
