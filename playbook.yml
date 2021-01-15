@@ -44,4 +44,5 @@
       galaxy:
         conda_auto_init: false
   roles:
-    - galaxy
+    - role: galaxy
+      tags: [always]
