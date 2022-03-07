@@ -1,4 +1,4 @@
-An Ansible playbook used when creating a minimal docker image for Galaxy.
+An Ansible playbook used when creating the minimal docker image for Galaxy.
 
 This playbook uses the [ansible-galaxy](https://github.com/galaxyproject/ansible-galaxy)
 role, and defines settings suitable for running a minimal build of Galaxy, by default
@@ -30,7 +30,7 @@ docker build --build-arg GALAXY_PLAYBOOK_REPO=https://github.com/myrepo/galaxy-c
 
 ### Method 2
 
-Extend the mimimal image and add your customizations on top.
+Extend the minimal image and add your customizations on top.
 
 ```
 FROM galaxy/galaxy:latest

@@ -1,0 +1,16 @@
+# This file is included so that Galaxy installs conditional dependencies automatically.
+job_conf.yml:
+  runners:
+    local:
+      load: galaxy.jobs.runners.local:LocalJobRunner
+      workers: 4
+    k8s:
+      load: galaxy.jobs.runners.kubernetes:KubernetesJobRunner
+  handling:
+    assign:
+      - "db-skip-locked"
+  execution:
+    default: local
+    environments:
+      local:
+        runner: local
