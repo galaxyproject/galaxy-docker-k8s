@@ -14,3 +14,11 @@ job_conf.yml:
     environments:
       local:
         runner: local
+      vortex_dispatcher:
+        container_monitor: false
+        runner: dynamic
+        type: python
+        function: map_tool_to_destination
+        rules_module: vortex.rules
+        docker_enabled: true
+        tmp_dir: "true"
