@@ -41,6 +41,8 @@
         hook-master-start: unix_signal:2 gracefully_kill_them_all
         enable-threads: true
         py-call-osafterfork: true
+      galaxy:
+        job_config_file: config/job_conf.yml
   tasks:
   - name: Run the galaxy role
     include_role:
