@@ -1,24 +1,23 @@
 # This file is included so that Galaxy installs conditional dependencies automatically.
-job_conf.yml:
-  runners:
+runners:
+  local:
+    load: galaxy.jobs.runners.local:LocalJobRunner
+    workers: 4
+  k8s:
+    load: galaxy.jobs.runners.kubernetes:KubernetesJobRunner
+handling:
+  assign:
+    - "db-skip-locked"
+execution:
+  default: local
+  environments:
     local:
-      load: galaxy.jobs.runners.local:LocalJobRunner
-      workers: 4
-    k8s:
-      load: galaxy.jobs.runners.kubernetes:KubernetesJobRunner
-  handling:
-    assign:
-      - "db-skip-locked"
-  execution:
-    default: local
-    environments:
-      local:
-        runner: local
-      vortex_dispatcher:
-        container_monitor: false
-        runner: dynamic
-        type: python
-        function: map_tool_to_destination
-        rules_module: vortex.rules
-        docker_enabled: true
-        tmp_dir: "true"
+      runner: local
+    vortex_dispatcher:
+      container_monitor: false
+      runner: dynamic
+      type: python
+      function: map_tool_to_destination
+      rules_module: vortex.rules
+      docker_enabled: true
+      tmp_dir: "true"
