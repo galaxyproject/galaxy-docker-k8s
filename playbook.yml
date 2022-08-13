@@ -20,29 +20,6 @@
         dest: "{{ galaxy_server_dir }}/static/welcome.html"
       - src: files/k8s-requirements.txt
         dest: "{{ galaxy_server_dir }}/lib/galaxy/dependencies/k8s-requirements.txt"
-
-    galaxy_config:
-      uwsgi:
-        virtualenv: "{{ galaxy_server_dir }}/.venv"
-        pythonpath: "{{ galaxy_server_dir }}/lib"
-        mount: /=galaxy.webapps.galaxy.buildapp:uwsgi_app()
-        http: 0.0.0.0:8080
-        manage-script-name: true
-        static-map:
-          - /static/style={{ galaxy_server_dir }}/static/style/blue
-          - /static={{ galaxy_server_dir }}/static
-          - /favicon.ico=/galaxy/server/static/favicon.ico
-        static-safe: /galaxy/server/client/galaxy/images
-        thunder-lock: true
-        buffer-size: 16384
-        offload-threads: 2
-        processes: 1
-        threads: 4
-        die-on-term: true
-        master: true
-        hook-master-start: unix_signal:2 gracefully_kill_them_all
-        enable-threads: true
-        py-call-osafterfork: true
   tasks:
   - name: Run the galaxy role
     include_role:
