@@ -4,6 +4,21 @@
 - hosts: localhost
   connection: local
   vars:
+    required_conditional_packages: ['psycopg2-binary', 'pykube', 'total-perspective-vortex']
+  tasks:
+  - name: Grep for required packages
+    shell: "grep -w '{{ item }}' /galaxy/server/lib/galaxy/dependencies/conditional-requirements.txt"
+    register: grep_output
+    ignore_errors: true
+    changed_when: false
+    with_items: "{{ required_conditional_packages }}"
+  - name: register conditional package versions, which will be used to render the k8s-requirements.txt.j2 template
+    set_fact:
+      conditional_package_requirements: "{{ dict(grep_output.results | map(attribute='item') | zip(grep_output.results | map(attribute='stdout_lines'))) }}"
+
+- hosts: localhost
+  connection: local
+  vars:
     galaxy_config_style: yaml
     galaxy_layout: legacy-improved
     galaxy_server_dir: /galaxy/server
@@ -15,10 +30,12 @@
     galaxy_manage_clone: false
     galaxy_manage_existing: true
     galaxy_client_make_target: client-production
+    galaxy_manage_gravity: false
     galaxy_config_files:
       - src: files/welcome.html
         dest: "{{ galaxy_server_dir }}/static/welcome.html"
-      - src: files/k8s-requirements.txt
+    galaxy_config_templates:
+      - src: templates/k8s-requirements.txt.j2
         dest: "{{ galaxy_server_dir }}/lib/galaxy/dependencies/k8s-requirements.txt"
 
     galaxy_config:
