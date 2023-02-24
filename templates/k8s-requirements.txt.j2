@@ -1,0 +1,4 @@
+-r pinned-requirements.txt
+{% for requirement_line in conditional_package_requirements.values() %}
+{{ requirement_line }}
+{% endfor %}
