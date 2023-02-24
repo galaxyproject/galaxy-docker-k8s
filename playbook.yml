@@ -30,6 +30,7 @@
     galaxy_manage_clone: false
     galaxy_manage_existing: true
     galaxy_client_make_target: client-production
+    galaxy_manage_gravity: false
     galaxy_config_files:
       - src: files/welcome.html
         dest: "{{ galaxy_server_dir }}/static/welcome.html"
