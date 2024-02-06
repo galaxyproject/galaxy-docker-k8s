@@ -4,7 +4,7 @@
 - hosts: localhost
   connection: local
   vars:
-    required_conditional_packages: ['psycopg2-binary', 'pykube', 'total-perspective-vortex']
+    required_conditional_packages: ['psycopg2-binary', 'pykube-ng', 'total-perspective-vortex']
   tasks:
   - name: Grep for required packages
     shell: "grep -w '{{ item }}' /galaxy/server/lib/galaxy/dependencies/conditional-requirements.txt"
