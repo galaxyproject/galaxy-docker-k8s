@@ -8,10 +8,53 @@ for how to set up on Kubernetes.
 See [Docker Galaxy Stable](https://github.com/bgruening/docker-galaxy-stable) for a
 fully-fledged, single container installation of Galaxy.
 
+## Table of contents
+
+  * [Running a pre-built image](#running-a-pre-built-image)
+  * [Building a Galaxy docker image](#building-a-galaxy-docker-image)
+  * [Extending the image](#extending-the-image)
+  * [Run a container with a Postgres database)](#run-a-container-with-a-postgres-database)
+
+## Running a pre-built image
+
+### Running latest stable version
+
+Use the `<version>-auto` tag to run the latest build of each release. e.g:
+
+```
+docker run -it --rm -p 8080:8080 galaxy/galaxy-min:24.0-auto
+```
+
+or for `quay.io`
+
+```
+docker run -it --rm -p 8080:8080 quay.io/galaxyproject/galaxy-min:24.0-auto
+```
+
+### Running latest development build
+
+```
+docker run -it --rm -p 8080:8080 quay.io/galaxy/galaxy-min:dev
+```
+or for `quay.io`
+
+```
+docker run -it --rm -p 8080:8080 quay.io/galaxyproject/galaxy-min:dev
+```
+
+### Running specific, unchanging version
+
+These do not have the `-auto` suffix, and once built, do not change. Useful for exact reproducibility.
+
+```
+docker run -it --rm -p 8080:8080 quay.io/galaxy/galaxy-min:23.2.1
+```
+
 ## Building a Galaxy docker image
 
 ```
 git clone https://github.com/galaxyproject/galaxy.git
+cd galaxy
 docker build -f .k8s_ci.Dockerfile . --tag galaxy/galaxy:latest
 docker run -it --rm -p 8080:8080 galaxy/galaxy:latest
 ```
@@ -46,7 +89,7 @@ USER galaxy
 RUN /galaxy/server/.venv/bin/pip install drmaa
 ```
 
-## Build and run a container image (full with Postgres database)
+## Run a container with a Postgres database
 The default build above uses an sqlite database, although the image has the
 necessary postgres drivers installed. In order to start Galaxy with a Postgres
 database, we need to run a Postgres container in parallel.
