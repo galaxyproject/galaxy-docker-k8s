@@ -15,7 +15,11 @@
   - name: register conditional package versions, which will be used to render the k8s-requirements.txt.j2 template
     set_fact:
       conditional_package_requirements: "{{ dict(grep_output.results | map(attribute='item') | zip(grep_output.results | map(attribute='stdout_lines'))) }}"
+  - name: Print the conditional package requirements
+    debug:
+      var: conditional_package_requirements
 
+      
 - hosts: localhost
   connection: local
   vars:
