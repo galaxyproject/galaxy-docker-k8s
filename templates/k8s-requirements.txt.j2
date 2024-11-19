@@ -1,4 +1,5 @@
 -r pinned-requirements.txt
+sentry-sdk==2.18.0
 {% for requirement_lines in conditional_package_requirements.values() %}
 {% for requirement_line in requirement_lines %}
 {{ requirement_line }}
