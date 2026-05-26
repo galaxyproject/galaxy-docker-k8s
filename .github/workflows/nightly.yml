@@ -1,0 +1,69 @@
+# Lives in galaxyproject/galaxy-docker-k8s.
+# Safety net: if a dispatch is ever missed (token expired, hook removed, fork), the
+# nightly cron still rebuilds :dev and any release_* branch that changed in the last
+# day. The build-test workflow's idempotent push makes a redundant run harmless.
+name: Nightly container reconcile
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch: {}
+
+concurrency:
+  group: nightly-container
+  cancel-in-progress: true
+
+jobs:
+  detect-release-branches:
+    name: Find release_* branches changed in last 24h
+    runs-on: ubuntu-latest
+    if: github.repository_owner == 'galaxyproject'
+    outputs:
+      branches: ${{ steps.d.outputs.branches }}
+      has_branches: ${{ steps.d.outputs.has_branches }}
+    steps:
+      - name: Checkout Galaxy (full history)
+        uses: actions/checkout@v6
+        with:
+          repository: galaxyproject/galaxy
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Detect
+        id: d
+        run: |
+          since=$(date -d '24 hours ago' --iso-8601)
+          # Emit a JSON array of {branch, tag} objects, tag = "<X>-auto" (release_ stripped).
+          json="[]"
+          for b in $(git branch -r | sed 's# *origin/##' | grep '^release_'); do
+            if [ -n "$(git log --since="$since" --oneline "origin/$b" --max-count=1)" ]; then
+              json=$(echo "$json" | jq -c --arg b "$b" --arg t "${b#release_}-auto" '. + [{branch:$b, tag:$t}]')
+            fi
+          done
+          echo "branches=$json" >> "$GITHUB_OUTPUT"
+          [ "$json" = "[]" ] && echo "has_branches=false" >> "$GITHUB_OUTPUT" || echo "has_branches=true" >> "$GITHUB_OUTPUT"
+
+  dev:
+    name: Reconcile :dev
+    if: github.repository_owner == 'galaxyproject'
+    uses: ./.github/workflows/build-test.yml
+    with:
+      galaxy_ref: dev
+      image_tag: dev
+      publish: true
+    secrets: inherit
+
+  release-branches:
+    name: Reconcile ${{ matrix.branch }}
+    needs: detect-release-branches
+    if: needs.detect-release-branches.outputs.has_branches == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJson(needs.detect-release-branches.outputs.branches) }}
+    uses: ./.github/workflows/build-test.yml
+    with:
+      galaxy_ref: ${{ matrix.branch }}
+      image_tag: ${{ matrix.tag }}
+      publish: true
+    secrets: inherit
