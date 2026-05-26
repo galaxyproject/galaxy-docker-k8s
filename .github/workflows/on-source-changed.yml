@@ -1,0 +1,150 @@
+# Lives in galaxyproject/galaxy-docker-k8s.
+# Entry point fired by the main repo's dispatch hook (and manually re-runnable).
+# Maps dev / release_branch / release -> image tag, skips already-published
+# releases, builds+tests+publishes, and opens the galaxy-helm bump PR on release.
+name: Build Galaxy container (on source change)
+
+on:
+  repository_dispatch:
+    types: [galaxy-source-changed]
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'dev | release_branch | release'
+        type: choice
+        options: [dev, release_branch, release]
+        required: true
+      ref:
+        description: 'galaxy ref to build (branch, tag, or sha)'
+        type: string
+        required: true
+      is_prerelease:
+        type: boolean
+        default: false
+
+concurrency:
+  group: build-${{ github.event.client_payload.ref || inputs.ref }}
+  cancel-in-progress: true
+
+jobs:
+  resolve:
+    name: Resolve build parameters
+    runs-on: ubuntu-latest
+    if: github.repository_owner == 'galaxyproject'
+    outputs:
+      build_type: ${{ steps.r.outputs.build_type }}
+      ref: ${{ steps.r.outputs.ref }}
+      image_tag: ${{ steps.r.outputs.image_tag }}
+      is_prerelease: ${{ steps.r.outputs.is_prerelease }}
+      should_build: ${{ steps.skip.outputs.should_build }}
+    steps:
+      - name: Resolve dispatch vs manual inputs
+        id: r
+        run: |
+          if [[ "${{ github.event_name }}" == "repository_dispatch" ]]; then
+            build_type='${{ github.event.client_payload.build_type }}'
+            ref='${{ github.event.client_payload.ref }}'
+            is_prerelease='${{ github.event.client_payload.is_prerelease }}'
+          else
+            build_type='${{ inputs.build_type }}'
+            ref='${{ inputs.ref }}'
+            is_prerelease='${{ inputs.is_prerelease }}'
+          fi
+          case "$build_type" in
+            dev)            image_tag="dev" ;;
+            release_branch) image_tag="${ref#release_}-auto" ;;
+            release)        image_tag="${ref#v}" ;;
+            *) echo "::error::unknown build_type '$build_type'"; exit 1 ;;
+          esac
+          {
+            echo "build_type=$build_type"
+            echo "ref=$ref"
+            echo "image_tag=$image_tag"
+            echo "is_prerelease=$is_prerelease"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Skip releases already published
+        id: skip
+        run: |
+          should_build=true
+          if [[ "${{ steps.r.outputs.build_type }}" == "release" ]]; then
+            t="${{ steps.r.outputs.image_tag }}"
+            if docker manifest inspect "quay.io/galaxyproject/galaxy-min:$t" >/dev/null 2>&1 \
+               || docker manifest inspect "galaxy/galaxy-min:$t" >/dev/null 2>&1; then
+              echo "::notice::galaxy-min:$t already published — skipping duplicate build."
+              should_build=false
+            fi
+          fi
+          echo "should_build=$should_build" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build, test, publish
+    needs: resolve
+    if: needs.resolve.outputs.should_build == 'true'
+    uses: ./.github/workflows/build-test.yml
+    with:
+      galaxy_ref: ${{ needs.resolve.outputs.ref }}
+      image_tag: ${{ needs.resolve.outputs.image_tag }}
+      publish: true
+    secrets: inherit
+
+  helm-pr:
+    name: Open galaxy-helm bump PR
+    needs: [resolve, build]
+    if: needs.resolve.outputs.build_type == 'release' && needs.resolve.outputs.is_prerelease == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate GitHub App token
+        id: token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.HELM_UPDATER_APP_ID }}
+          private-key: ${{ secrets.HELM_UPDATER_PKEY }}
+          repositories: galaxy-helm
+
+      - name: Checkout galaxy-helm
+        uses: actions/checkout@v6
+        with:
+          repository: galaxyproject/galaxy-helm
+          token: ${{ steps.token.outputs.token }}
+
+      - name: Bump appVersion + image.tag
+        run: |
+          sed -i "s/^appVersion:.*/appVersion: \"${{ needs.build.outputs.galaxy_version }}\"/" galaxy/Chart.yaml
+          sed -i "s/^  tag:.*/  tag: \"${{ needs.resolve.outputs.image_tag }}\"/" galaxy/values.yaml
+
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ steps.token.outputs.token }}
+          commit-message: "Update Galaxy to version ${{ needs.build.outputs.galaxy_version }}"
+          title: "Update Galaxy to version ${{ needs.build.outputs.galaxy_version }}"
+          body: |
+            Automated bump from the Galaxy container build.
+            - appVersion: `${{ needs.build.outputs.galaxy_version }}`
+            - image.tag: `${{ needs.resolve.outputs.image_tag }}`
+          branch: update-galaxy-${{ needs.build.outputs.galaxy_version }}
+          delete-branch: true
+          labels: |
+            patch
+            automated-update
+
+  notify-failure:
+    name: Notify on failure
+    needs: [resolve, build]
+    if: always() && needs.build.result == 'failure'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Slack
+        uses: slackapi/slack-github-action@v3.0.1
+        with:
+          webhook: ${{ secrets.K8S_SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "text": ":x: Galaxy container build failed (${{ needs.resolve.outputs.image_tag }})",
+              "blocks": [
+                { "type": "section", "text": { "type": "mrkdwn",
+                  "text": ":x: *Galaxy container build failed*\n*Tag:* `${{ needs.resolve.outputs.image_tag }}`\n*Ref:* `${{ needs.resolve.outputs.ref }}`\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View run>" } }
+              ]
+            }
